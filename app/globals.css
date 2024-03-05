@@ -1,33 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+.section-text{
+    line-height: 200%;
+}
+.hamburger {
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    transition: all 0.25s;
+    position: relative;
+  }
+  
+  .hamburger-top,.hamburger-middle,.hamburger-bottom{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 24px;
+    height: 2px;
+    background: #ffffff;
+    transform: rotate(0);
+    transition: all 0.5s;
+  }
+  
+  .hamburger-middle{
+    transform: translateY(7px);
+  }
+  .hamburger-bottom{
+    transform: translateY(14px);
+  }
+  
+  .open{
+    transform: rotate(90deg);
+    transform:  translateY(0px);
+  }
+  
+  .open .hamburger-top{
+    transform: rotate(45deg) translateY(6px) translate(6px);
+  }
+  
+  .open .hamburger-middle{
+    display: none;
+  }
+  
+  .open .hamburger-bottom{
+    transform: rotate(-45deg) translateY(6px) translate(-6px);
+  }
+
+.box-shadow:hover{
+  background-color: #81fbe9;
+  box-shadow: 0 0 8px 1px #00ffe099;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
-
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+.spin-animation {
+  animation: spin 10s linear infinite;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+.orbit-animation {
+  animation: spin 20s linear infinite;
 }
+
+.background-green{
+  background-image: linear-gradient(90deg, rgba(0, 230, 118, .6), rgba(35, 247, 221, .6));
+}
+
+::selection {
+  background-color: #23f7dd; 
+  color: black; 
+}
+
