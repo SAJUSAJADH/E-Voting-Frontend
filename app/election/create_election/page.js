@@ -40,7 +40,7 @@ function Create_Election() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ address }),
+          body: JSON.stringify({ address, electionName, electionDescription }),
         })
           .then((response) => response.json())
           .then((data) => {

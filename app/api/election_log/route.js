@@ -5,9 +5,11 @@ import { NextResponse } from 'next/server'
 export async function POST(request) {
   try {
     await Connect()
-    const { address } = await request.json()
+    const { address, electionName, electionDescription } = await request.json()
     const EmailExist = await ElectionLog.find({ address })
     const newElectionlog = new ElectionLog({
+      electionname: electionName,
+      electiondescription: electionDescription,
       address: address,
       status: true,
     })

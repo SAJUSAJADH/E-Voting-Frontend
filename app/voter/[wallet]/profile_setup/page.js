@@ -85,7 +85,10 @@ function Profile_Setup() {
     } else {
       const regex = /^[a-zA-Z0-9]+$/
       if (regex.test(inputValue)) {
-        setFormData((prevState) => ({ ...prevState, voterId: inputValue }))
+        setFormData((prevState) => ({
+          ...prevState,
+          voterId: inputValue.toUpperCase(),
+        }))
       }
     }
   }

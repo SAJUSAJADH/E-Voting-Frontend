@@ -1,215 +1,296 @@
 'use client'
 
-import Menu from '@/components/menu'
-import { FileProtectOutlined, LoadingOutlined } from '@ant-design/icons'
-import React, { useEffect, useRef, useState } from 'react'
+import AuthorityNavbar from '@/components/authorityNavbar'
+import { LoadingOutlined } from '@ant-design/icons'
+import { useSession } from 'next-auth/react'
+import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { Card } from 'antd'
 
 function Voters_List() {
-  const [votersList, setVotersList] = useState([])
   const [voterId, setVoterId] = useState('')
+  const [removeId, setRemoveId] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const [Loading, setLoading] = useState(false)
-  const [removing, setRemoving] = useState(false)
-  const [callData, setCallData] = useState(false)
+  const { data: session, status } = useSession()
+  const [voters, setVoters] = useState([])
 
-  useEffect(() => {
+  const GetVoters = async () => {
     try {
-      fetch('/api/add_voter', {
-        next: { revalidate: 10 },
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          const { voters } = data
-          setVotersList(voters)
-        })
-    } catch (error) {
-      console.log(error)
-    }
-  }, [callData])
-
-  const RegisterVoter = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      if (voterId.length === 6) {
-        const registerVoter = fetch('/api/add_voter', {
+      if (session) {
+        const { name } = session?.user
+        fetch('/api/get_voter', {
           cache: 'no-store',
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ voterId }),
+          body: JSON.stringify({ name }),
         })
           .then((response) => response.json())
-          .then((data) => {
-            const ok = (data?.message).includes('Added voter Successfully')
-            const networkDown = (data?.message).includes('Failed to add voter')
-            const notOk = (data?.message).includes('voter already exist')
-            ok && setCallData(!callData)
-            notOk && toast.error('Voter is already Registered')
-            networkDown && toast.error('Network down. Try again')
-            setVoterId('')
-            setLoading(false)
+          .then(async (data) => {
+            const ok = (data?.message).includes('data found')
+            const notOk =
+              (data?.message).includes('not found') ||
+              (data?.message).includes('Cant get it')
+            if (ok) {
+              const { voters } = await data?.electionLog
+              setVoters(voters)
+            }
+            notOk && console.log(data.status)
           })
-        toast.promise(
-          registerVoter,
-          {
-            loading: `Registering Voter - ${voterId}`,
-            success: (data) => `Finished Processing`,
-            error: (err) => `Network unAvailable`,
-          },
-          {
-            style: {
-              minWidth: '250px',
-            },
-            success: {
-              duration: 5000,
-              icon: '✔️',
-            },
-          }
-        )
-      } else {
-        toast.error('Enter a valid voterId')
-        setVoterId('')
-        setLoading(false)
       }
     } catch (error) {
       console.log(error)
-      toast.error('Network not available. Try again')
-      setVoterId('')
-      setLoading(false)
     }
   }
 
-  const removeVoter = async (v) => {
-    const id = v.voterId
-    setRemoving(true)
+  useEffect(() => {
+    GetVoters()
+  }, [session, status])
+
+  const handleChange = (e) => {
+    const inputValue = e.target.value.replace(/[^a-zA-Z0-9]/g, '')
+    setVoterId(inputValue.toUpperCase())
+  }
+
+  const idChange = (e) => {
+    const inputValue = e.target.value.replace(/[^a-zA-Z0-9]/g, '')
+    setRemoveId(inputValue.toUpperCase())
+  }
+
+  const addVoter = async (e) => {
+    e.preventDefault()
+    setIsLoading(true)
     try {
-      const removalPromise = fetch('/api/remove_voter', {
+      const { name } = session?.user
+      if (!voterId) {
+        toast.error('Enter the Voters id')
+        setIsLoading(false)
+        return
+      }
+      if (voterId.length !== 10) {
+        toast.error('Invalid Voter id')
+        setIsLoading(false)
+        return
+      }
+      if (!name) {
+        toast.error('Network busy. Try again')
+        setIsLoading(false)
+        return
+      }
+      fetch('/api/add_voter', {
         cache: 'no-store',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ voterId, name }),
       })
         .then((response) => response.json())
-        .then((data) => {
-          console.log(data)
-          const ok = (data?.message).includes('removed voter')
-          const notOk =
-            (data?.message).includes('Failed to Remove user') ||
-            (data?.message).includes('Try after some time')
-          ok && setCallData(!callData)
-          notOk && toast.error('Network unavailable. Try again')
-          setRemoving(false)
+        .then(async (data) => {
+          const ok = (data?.message).includes('Voter added successfully')
+          const notOk = (data?.message).includes(
+            'Voter already exists in the list'
+          )
+          const closed = (data?.message).includes('Election closed')
+          const networkError =
+            (data?.message).includes('Election log not found') ||
+            (data?.message).includes('Network busy')
+          if (ok) {
+            toast.success('Voter added Successfully')
+            await GetVoters()
+          }
+          notOk && toast.error('Already registered')
+          closed && toast.error('Election closed')
+          networkError && toast.error('Network is busy. Try again')
+          setIsLoading(false)
+          setVoterId('')
         })
-      toast.promise(
-        removalPromise,
-        {
-          loading: `Removing Voter - ${id}`,
-          success: (data) => `Finished Processing`,
-          error: (err) => `Network unAvailable`,
-        },
-        {
-          style: {
-            minWidth: '250px',
-          },
-          success: {
-            duration: 5000,
-            icon: '✔️',
-          },
-        }
-      )
     } catch (error) {
+      setIsLoading(false)
+      toast.error('Network busy. Try again')
       console.log(error)
-      setRemoving(false)
-      notOk && toast.error('Network unavailable. Try again')
     }
   }
 
-  const votersMapping = votersList.map((voter, index) => {
-    return (
-      <Card
-        key={index}
-        title={voter.voterId}
-        bordered={true}
-        style={{
-          width: 300,
-        }}
-        className='border border-green-400'
-      >
-        <button
-          disabled={removing}
-          onClick={() => removeVoter(voter)}
-          className='text-white uppercase px-3 bg-orange-500 hover:bg-orange-600 py-2 font-bricolage font-light text-base border border-white rounded-lg hover:text-white hover:border-orange-600'
-        >
-          Remove
-        </button>
-        <button
-          disabled={true}
-          className='text-white uppercase px-3 bg-red-500 hover:bg-red-600 py-2 font-bricolage font-light text-base border border-white rounded-lg hover:text-white hover:border-red-600'
-        >
-          Not voted
-        </button>
-      </Card>
-    )
-  })
+  const removeVoter = (e) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const { name } = session?.user
+      if (!removeId) {
+        toast.error('Enter the Voters id')
+        setLoading(false)
+        return
+      }
+      if (removeId.length !== 10) {
+        toast.error('Invalid Voter id')
+        setLoading(false)
+        return
+      }
+      if (!name) {
+        toast.error('Network busy. Try again')
+        setLoading(false)
+        return
+      }
+      fetch('/api/remove_voter', {
+        cache: 'no-store',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ removeId, name }),
+      })
+        .then((response) => response.json())
+        .then(async (data) => {
+          const ok = (data?.message).includes('Voter removed successfully')
+          const notOk = (data?.message).includes(
+            'Voter does not exist in the list'
+          )
+          const closed = (data?.message).includes('Election closed')
+          const alreadyVoted = (data?.message).includes('Voter already voted')
+          const networkError =
+            (data?.message).includes('Election log not found') ||
+            (data?.message).includes('Network busy')
+          if (ok) {
+            toast.success('Voter removed Successfully')
+            await GetVoters()
+          }
+          notOk && toast.error('Voter does not exist')
+          closed && toast.error('Election closed')
+          alreadyVoted && toast.error('Too late...Voter already voted.')
+          networkError && toast.error('Network is busy. Try again')
+          setLoading(false)
+          setRemoveId('')
+        })
+        .catch((error) => {
+          toast.error('Network busy. Try again later.')
+          setLoading(false)
+          console.log(error)
+        })
+    } catch (error) {
+      toast.error('Network busy. Try again later.')
+      setLoading(false)
+      console.log(error)
+    }
+  }
 
   return (
     <>
-      <Menu route={'voters_list'} />
-      <div className='w-full flex justify-center pt-28 px-3 lg:px-20 py-6'>
-        <div className='grid gap-2'>
-          <span
-            onClick={() => toast('Election Description', { duration: 6000 })}
-            className='flex cursor-pointer justify-center items-center gap-2 text-dark-purple'
-          >
-            <FileProtectOutlined /> Election Name
-          </span>
-        </div>
-      </div>
-      <div className='container mx-auto px-3 lg:px-20 py-3'>
-        <div className='flex justify-center items-center'>
-          <div className='grid'>
-            <div className='relative w-full z-20'>
-              <div className='bg-black px-6 lg:px-10 text-white mx-5 border dark:border-b-white/50 dark:border-t-white/50 border-b-white/20 sm:border-t-white/20 shadow-[20px_0_20px_20px] shadow-slate-500/10 dark:shadow-white/20 rounded-lg border-white/20 border-l-white/20 border-r-white/20 sm:shadow-sm lg:rounded-xl lg:shadow-none'>
-                <div className='flex flex-col p-4'>
-                  <h3 className='text-xl font-semibold leading-6 tracking-tighter'>
-                    Register Voter
+      <AuthorityNavbar route={'voters_list'} />
+      <div className='w-full bg-[#353935] pt-28 lg:pt-36 px-3 lg:px-20 min-h-screen '>
+        <div className='w-full justify-center items-start flex flex-col gap-3'>
+          <div className='w-full grid lg:grid-cols-2 gap-4'>
+            <div className='w-full flex justify-center lg:justify-end items-center'>
+              <div className='flex flex-col w-full lg:w-auto px-2 lg:px-8 rounded-lg py-2 lg:py-8 gap-4 lg:gap-8 bg-black z-20 shadow-xl'>
+                <div className='flex flex-col'>
+                  <h3 className='text-xl font-semibold leading-6 text-white/50 tracking-tighter'>
+                    Add Voter
                   </h3>
+                  <p className='mt-1.5 text-sm font-medium text-white/50'>
+                    Add eligible Voters to the election.
+                  </p>
                 </div>
-                <div className='p-6 pt-0'>
+                <div className='flex flex-col'>
                   <form>
-                    <div>
-                      <div className='grid gap-3'>
-                        <div className='group relative rounded-lg border focus-within:border-sky-200 px-3 pb-1.5 pt-2.5 duration-200 focus-within:ring focus-within:ring-sky-300/30'>
-                          <div className='flex justify-between'></div>
-                          <input
-                            type='text'
-                            name='voterId'
-                            value={voterId}
-                            onChange={(e) => setVoterId(e.target.value)}
-                            placeholder='6 digit VoterId'
-                            autoComplete='off'
-                            className='block w-full border-0 bg-transparent p-0 text-sm file:my-1 file:rounded-full file:border-0 file:bg-accent file:px-4 file:py-2 file:font-medium placeholder:text-muted-foreground/90 focus:outline-none focus:ring-0 sm:leading-7 text-foreground'
-                          />
+                    <div className='grid lg:flex lg:gap-2'>
+                      <div className='group w-full mt-4 lg:mt-0 relative rounded-lg border focus-within:border-sky-200 px-3 pb-1.5 pt-2.5 duration-200 focus-within:ring focus-within:ring-sky-300/30'>
+                        <div className='flex justify-between'>
+                          <label className='text-xs font-medium text-muted-foreground group-focus-within:text-white text-gray-400'>
+                            Voter Id
+                          </label>
+                          <div className='absolute right-3 translate-y-2 text-green-200'>
+                            <svg
+                              xmlns='http://www.w3.org/2000/svg'
+                              viewBox='0 0 24 24'
+                              fill='currentColor'
+                              className='w-6 h-6'
+                            >
+                              <path
+                                fillRule='evenodd'
+                                d='M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z'
+                                clipRule='evenodd'
+                              />
+                            </svg>
+                          </div>
                         </div>
+                        <input
+                          type='text'
+                          name='voterId'
+                          value={voterId}
+                          onChange={handleChange}
+                          placeholder='Voter Id'
+                          autoComplete='off'
+                          className='block uppercase w-full text-gray-400 border-0 bg-transparent p-0 text-sm file:my-1 file:rounded-full file:border-0 file:bg-accent file:px-4 file:py-2 file:font-medium placeholder:text-muted-foreground/90 focus:outline-none focus:ring-0 sm:leading-7 text-foreground'
+                        />
                       </div>
                     </div>
                     <div className='mt-4 flex items-center justify-center gap-x-2'>
                       <button
-                        onClick={RegisterVoter}
-                        disabled={Loading}
+                        disabled={isLoading}
+                        onClick={addVoter}
                         className='font-semibold hover:bg-black hover:text-white hover:ring hover:ring-white transition duration-300 inline-flex items-center justify-center rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-black h-10 px-4 py-2'
                         type='submit'
                       >
-                        {Loading ? <LoadingOutlined /> : 'Register'}
+                        {isLoading ? <LoadingOutlined /> : 'Add Voter'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div className='w-full flex justify-center lg:justify-start items-center'>
+              <div className='flex flex-col w-full lg:w-auto px-2 lg:px-8 rounded-lg py-2 lg:py-8 gap-4 lg:gap-8 bg-black z-20 shadow-xl'>
+                <div className='flex flex-col'>
+                  <h3 className='text-xl font-semibold leading-6 text-white/50 tracking-tighter'>
+                    Remove Voter
+                  </h3>
+                  <p className='mt-1.5 text-sm font-medium text-white/50'>
+                    Remove Voters from the election.
+                  </p>
+                </div>
+                <div className='flex flex-col'>
+                  <form>
+                    <div className='grid lg:flex lg:gap-2'>
+                      <div className='group w-full mt-4 lg:mt-0 relative rounded-lg border focus-within:border-sky-200 px-3 pb-1.5 pt-2.5 duration-200 focus-within:ring focus-within:ring-sky-300/30'>
+                        <div className='flex justify-between'>
+                          <label className='text-xs font-medium text-muted-foreground group-focus-within:text-white text-gray-400'>
+                            Voter Id
+                          </label>
+                          <div className='absolute right-3 translate-y-2 text-green-200'>
+                            <svg
+                              xmlns='http://www.w3.org/2000/svg'
+                              viewBox='0 0 24 24'
+                              fill='currentColor'
+                              className='w-6 h-6'
+                            >
+                              <path
+                                fillRule='evenodd'
+                                d='M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z'
+                                clipRule='evenodd'
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                        <input
+                          type='text'
+                          name='voterId'
+                          value={removeId}
+                          onChange={idChange}
+                          placeholder='Voter Id'
+                          autoComplete='off'
+                          className='block uppercase w-full text-gray-400 border-0 bg-transparent p-0 text-sm file:my-1 file:rounded-full file:border-0 file:bg-accent file:px-4 file:py-2 file:font-medium placeholder:text-muted-foreground/90 focus:outline-none focus:ring-0 sm:leading-7 text-foreground'
+                        />
+                      </div>
+                    </div>
+                    <div className='mt-4 flex items-center justify-center gap-x-2'>
+                      <button
+                        disabled={Loading}
+                        onClick={removeVoter}
+                        className='font-semibold hover:bg-black hover:text-white hover:ring hover:ring-white transition duration-300 inline-flex items-center justify-center rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-black h-10 px-4 py-2'
+                        type='submit'
+                      >
+                        {Loading ? <LoadingOutlined /> : 'Remove Voter'}
                       </button>
                     </div>
                   </form>
@@ -217,12 +298,31 @@ function Voters_List() {
               </div>
             </div>
           </div>
-        </div>
-        <p className='cursor-pointer py-6 text-center lg:text-start text-xl lg:text-3xl text-[#080a45] font-semibold font-bricolage'>
-          Voters List
-        </p>
-        <div className='grid lg:grid-cols-3 xl:grid-cols-4 justify-center gap-3 lg:justify-start'>
-          {votersMapping}
+          <div className='flex w-full justify-center items-center'>
+            <div className='h-[40vh] lg:w-2/4 rounded-xl  mx-2 flex flex-col justify-start items-center py-3 bg-[#36454F]'>
+              <div className='flex justify-between items-center bg-[#36454F] z-30'>
+                <p className='text-white font-medium font-bricolage text-lg lg:text-4xl'>
+                  Voters List
+                </p>
+              </div>
+              <div className='w-full custom-scrollbar overflow-y-auto flex justify-start items-start px-3 py-3'>
+                <div className='w-full flex flex-wrap justify-center gap-3'>
+                  {voters && (
+                    <>
+                      {voters.map((voter, index) => (
+                        <p
+                          key={index}
+                          className={`text-sm lg:text-base ${voter.voted == false ? 'text-[#a3a3a3] hover:text-[#f5f5f5]' : 'text-green-500'} font-bricolage px-1 lg:px-2 cursor-pointer`}
+                        >
+                          {index + 1} . {voter.voterid}
+                        </p>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>

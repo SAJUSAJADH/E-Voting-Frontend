@@ -136,7 +136,6 @@ export default function Home() {
                     setIsLoading(true)
                     const response = await connectToBlockchain()
                     if (response[2].includes('Create an election')) {
-                      setIsLoading(false)
                       router.push('/election/create_election')
                     }
 
@@ -149,7 +148,6 @@ export default function Home() {
                       !response[2].includes('Create an election') &&
                       !response[2].includes('error')
                     ) {
-                      setIsLoading(false)
                       router.push(
                         `/election/${response[0]}/authority_dashboard`
                       )
@@ -184,11 +182,9 @@ export default function Home() {
                         const networkError =
                           (data?.message).includes('Network busy')
                         if (ok) {
-                          setIsLoading(false)
                           router.push(`/voter/${name}/dashboard`)
                         }
                         if (notOk) {
-                          setIsLoading(false)
                           router.push(`/voter/${name}/profile_setup`)
                         }
                         if (networkError) {

@@ -2,6 +2,7 @@
 
 import VoterNavbar from '@/components/voterNavbar'
 import { states } from '@/utils/province'
+import { LoadingOutlined } from '@ant-design/icons'
 import { useSession } from 'next-auth/react'
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -95,11 +96,6 @@ function Profile() {
         setIsLoading(false)
         return
       }
-      if (zipCode.length !== 6) {
-        setIsLoading(false)
-        toast.error('Invalid zipCode', { icon: '🚫' })
-        return
-      }
       if (!digitalWallet) {
         setIsLoading(false)
         toast.error('Network busy', { icon: '🚫' })
@@ -123,14 +119,15 @@ function Profile() {
         }),
       })
         .then((response) => response.json())
-        .then((data) => {
+        .then(async (data) => {
           const ok = (data?.message).includes('already registered')
           if (ok) {
             setIsLoading(false)
-            toast.success('updated successffully')
+            toast.success('updated successfully')
+            await getVoterInfo()
           } else {
             setIsLoading(false)
-            toast.error('Too many requests.', { icon: '🚫' })
+            toast.error('invalid request id.', { icon: '🚫' })
           }
         })
     } catch (error) {
