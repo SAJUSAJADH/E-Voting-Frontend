@@ -18,6 +18,7 @@ import { getElectionContract } from '@/blockchainActions/getElectioncontract'
 import AuthorityNavbar from '@/components/authorityNavbar'
 import { useSession } from 'next-auth/react'
 import { Get_candidates } from '@/blockchainActions/addCandidate'
+import { Announce_winner } from '@/blockchainActions/announceWinner'
 
 function Authority_Dashboard() {
   const { contract } = useParams()
@@ -25,6 +26,7 @@ function Authority_Dashboard() {
   const { name } = session?.user ?? {
     name: '0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B',
   }
+  const [isLoading, setIsLoading] = useState(false)
   const [electionData, setElectionData] = useState({
     electionName: '',
     electiondescription: '',
@@ -39,6 +41,7 @@ function Authority_Dashboard() {
     { 0: 'C', 1: '', 2: '', 3: 400 },
   ])
   const [totalVotes, setTotalVotes] = useState(0)
+  const [voters, setVoters] = useState(0)
 
   useEffect(() => {
     async function validateAuthority() {
@@ -91,6 +94,37 @@ function Authority_Dashboard() {
     validateAuthority()
   }, [])
 
+  useEffect(() => {
+    async function voters() {
+      try {
+        if (session) {
+          fetch('/api/get_voter', {
+            cache: 'no-store',
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name }),
+          })
+            .then((response) => response.json())
+            .then(async (data) => {
+              const ok = (data?.message).includes('data found')
+              if (ok) {
+                const { electionLog } = await data
+                const { voters } = await electionLog
+                const Totalvoters = voters?.length
+                setVoters(Totalvoters)
+              }
+            })
+            .catch((error) => console.log(error))
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    voters()
+  }, [session])
+
   const labels = candidates.map((obj) => obj[0])
   const values = candidates.map((obj) => parseInt(obj[3]))
   // const values = [500, 600, 800]
@@ -137,8 +171,68 @@ function Authority_Dashboard() {
     },
   }
 
+  const votersData = {
+    labels: ['Voted', 'NotVoted'],
+    datasets: [
+      {
+        label: 'Vote Count',
+        data: [200, 300],
+        backgroundColor: [
+          'rgba(255, 0, 127)',
+          'rgba(0, 0, 255)',
+          'rgba(0, 255, 0)',
+          'rgba(255, 255, 51)',
+          'rgba(255, 128, 0)',
+          'rgba(0, 0, 204)',
+          'rgba(255, 0, 0)',
+        ],
+        barThickness: 50,
+      },
+    ],
+  }
+
+  const votersOption = {
+    scales: {
+      y: {
+        display: false,
+      },
+    },
+    plugins: {
+      legend: {
+        labels: {
+          color: 'white',
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            return context.label + ': ' + context.formattedValue
+          },
+        },
+      },
+    },
+  }
+
   if (values.filter((value) => value !== 0).length > 0) {
     CandidateData.datasets[0].data = values
+  }
+
+  if (voters > 0) {
+    votersData.datasets[0].data = [totalVotes, voters - totalVotes]
+  }
+
+  const EndElection = async () => {
+    setIsLoading(true)
+    try {
+      const ElectionContract = await getElectionContract()
+      const transactionResponse = await ElectionContract.getDeployedElection(name)
+      Announce_winner(transactionResponse[0]).then((response)=>console.log(response))
+      setIsLoading(false)
+    } catch (error) {
+      setIsLoading(false)
+      toast.error('Network unavailable')
+      console.log(error)
+    }
   }
 
   return (
@@ -148,14 +242,14 @@ function Authority_Dashboard() {
         <div className='grid lg:grid-cols-4 gap-4 w-full'>
           <div className='grid gap-16 bg-[#36454F] rounded-xl px-3 py-3'>
             <div className='flex flex-col gap-3 justify-start items-start'>
-              <p className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
+              <p onClick={()=>toast(`${electionData.electionName}`,{position:'top-right'})} className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
                 Election Name: {electionData.electionName.substring(0, 20)}
               </p>
               <p className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
                 Election Authority:{' '}
                 {`${name.toString().substring(0, 5)}****${name.toString().substring(name.toString().length - 5)}`}
               </p>
-              <p className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
+              <p onClick={()=>toast(`${electionData.electiondescription}`,{position:'top-right'})} className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
                 Election Description:{' '}
                 {electionData.electiondescription.substring(0, 15)}
               </p>
@@ -179,7 +273,7 @@ function Authority_Dashboard() {
                 Total Voters{' '}
               </p>
               <p className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
-                {numofParticipants.numofVoters}
+                {voters}
               </p>
             </div>
           </div>
@@ -190,7 +284,7 @@ function Authority_Dashboard() {
                 Total Votes{' '}
               </p>
               <p className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
-                {totalVotes}
+                {numofParticipants.numofVoters}
               </p>
             </div>
           </div>
@@ -224,34 +318,19 @@ function Authority_Dashboard() {
             </div>
           </div>
           <div className='bg-[#36454F] flex flex-col justify-center items-center px-2 py-2 rounded-xl'>
-            <Doughnut
-              data={{
-                labels: ['A', 'B'],
-                datasets: [
-                  {
-                    label: 'Vote Count',
-                    data: [200, 300],
-                    backgroundColor: [
-                      'rgba(0, 0, 204)',
-                      'rgba(255, 0, 0)',
-                      'rgba(255, 0, 127)',
-                      'rgba(0, 0, 255)',
-                      'rgba(0, 255, 0)',
-                      'rgba(255, 255, 51)',
-                      'rgba(255, 128, 0)',
-                    ],
-                    barThickness: 50,
-                  },
-                ],
-              }}
-              options={{
-                scales: {
-                  y: {
-                    display: false,
-                  },
-                },
-              }}
-            />
+            <Doughnut data={votersData} options={votersOption} />
+          </div>
+        </div>
+        <div className='w-full mt-4 rounded flex justify-between bg-[#36454F] px-3 py-3'>
+          <div className='flex justify-center items-center'>
+          <p className='text-[#a3a3a3] text-center hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
+                Announce the winners of {electionData.electionName}.
+              </p>
+          </div>
+          <div className='flex justify-center items-center'>
+            <button onClick={EndElection} className='font-semibold hover:bg-black hover:text-white hover:ring hover:ring-white transition duration-300 inline-flex items-center justify-center rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-black h-10 px-4 py-2'>
+              End Election
+            </button>
           </div>
         </div>
       </div>

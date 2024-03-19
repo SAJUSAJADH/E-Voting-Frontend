@@ -3,6 +3,6 @@ import Electionfactabi from './Electionfact.json'
 
 const ElectionABI = Electionabi.abi
 const ElectionFactABI = Electionfactabi.abi
-const contractAddress = '0x05a58c6ceb28b4623B58fa3Dfdfc11c0296BF79A'
+const contractAddress = '0xEa82cBeD869E1C317Cc2e60c0C109eb42d50793F'
 
 export { ElectionABI, ElectionFactABI, contractAddress }

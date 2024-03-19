@@ -78,6 +78,12 @@ function Voters_List() {
         setIsLoading(false)
         return
       }
+      const voted = voters.filter((voter)=>voterId === voter.voterid)
+      if (voted.length !== 0) {
+        toast.error('Already added')
+        setIsLoading(false)
+        return
+      }
       fetch('/api/add_voter', {
         cache: 'no-store',
         method: 'POST',
@@ -130,6 +136,12 @@ function Voters_List() {
       }
       if (!name) {
         toast.error('Network busy. Try again')
+        setLoading(false)
+        return
+      }
+      const voted = voters.filter((voter)=>removeId === voter.voterid)
+      if(voted[0].voted){
+        toast.error('Already Voted')
         setLoading(false)
         return
       }
@@ -312,7 +324,7 @@ function Voters_List() {
                       {voters.map((voter, index) => (
                         <p
                           key={index}
-                          className={`text-sm lg:text-base ${voter.voted == false ? 'text-[#a3a3a3] hover:text-[#f5f5f5]' : 'text-green-500'} font-bricolage px-1 lg:px-2 cursor-pointer`}
+                          className={`text-sm lg:text-base ${voter.voted == false ? 'hover:text-[#a3a3a3] text-[#f5f5f5]' : 'text-[#a3a3a3]'} font-bricolage px-1 lg:px-2 cursor-pointer`}
                         >
                           {index + 1} . {voter.voterid}
                         </p>

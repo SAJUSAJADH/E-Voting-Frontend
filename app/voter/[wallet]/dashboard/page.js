@@ -10,6 +10,7 @@ import Image from 'next/image'
 import React, { useEffect, useState } from 'react'
 import Select from 'react-select'
 import { Vote } from '@/blockchainActions/vote'
+import toast from 'react-hot-toast'
 
 function Dashboard() {
   const [selectedElection, setSelectedElection] = useState(null)
@@ -55,52 +56,57 @@ function Dashboard() {
     }
   }
 
+  async function getParticularElectionData() {
+    if (selectedElection) {
+      setIsLoading(true)
+      const { value, status } = selectedElection
+      if (!status) {
+        const electionContract = await getElectionContract()
+        const transactionResponse =
+          await electionContract.getDeployedElection(value)
+        const numberOfParticipants = await GetNumberofParticipants(
+          transactionResponse[0]
+        )
+        const numberOfcandidates = await numberOfParticipants[0]
+        const response = await Get_candidates(
+          transactionResponse[0],
+          numberOfcandidates
+        )
+        response.length > 0 && setCandidates(response)
+      } else {
+        setElectionStatus(status)
+      }
+      setIsLoading(false)
+    }
+  }
+
   useEffect(() => {
     getAvailableElections()
   }, [session, status])
 
   useEffect(() => {
-    async function getParticularElectionData() {
-      if (selectedElection) {
-        setIsLoading(true)
-        const { value, status } = selectedElection
-        if (!status) {
-          const electionContract = await getElectionContract(value)
-          const transactionResponse =
-            await electionContract.getDeployedElection(value)
-          const numberOfParticipants = await GetNumberofParticipants(
-            transactionResponse[0]
-          )
-          const numberOfcandidates = await numberOfParticipants[0]
-          const response = await Get_candidates(
-            transactionResponse[0],
-            numberOfcandidates
-          )
-          response.length > 0 && setCandidates(response)
-        } else {
-          setElectionStatus(status)
-        }
-        setIsLoading(false)
-      }
-    }
     getParticularElectionData()
   }, [selectedElection])
 
-  const handleVote = async (e, candidateId, voterId, address) => {
+  const handleVote = async (e, candidateId, address) => {
     e.preventDefault()
     setButtonLoading({
       index: candidateId,
       status: true,
     })
     try {
-      if ((candidateId, voterId, address, session)) {
-        const response = await Vote(candidateId, voterId, address)
-        const ok = (res?.message).includes('voted')
-        const notOk = (res?.message).includes('internal server error')
-        const processing = (res?.message).includes('processing')
-        if (ok) {
-          const { name } = session?.user
-          const res = await fetch('/api/update_electionlog', {
+      if ((candidateId, address, session)) {
+        const { name } = session?.user
+        const { address } = selectedElection
+        const electionContract = await getElectionContract()
+        const transactionResponse =
+          await electionContract.getDeployedElection(address)
+        const response = await Vote(candidateId, name, transactionResponse[0])
+        const ok = (response?.message).includes('voted')
+        const notOk = (response?.message).includes('internal server error')
+        const processing = (response?.message).includes('processing')
+        if (ok || processing) {
+          fetch('/api/update_electionlog', {
             cache: 'no-store',
             method: 'POST',
             headers: {
@@ -113,8 +119,15 @@ function Dashboard() {
               address: selectedElection.address,
             }),
           })
-          const data = await res.json()
-          getAvailableElections()
+            .then((response) => response.json())
+            .then(async (data) => {
+              setElectionStatus(true)
+              setCandidates([])
+              toast.success('voted successfully')
+              console.log('all good to go')
+            })
+        } else {
+          toast.error('something went wrong')
         }
       }
       setButtonLoading({
@@ -189,12 +202,7 @@ function Dashboard() {
                   <button
                     disabled={buttonLoading.status}
                     onClick={(e) =>
-                      handleVote(
-                        e,
-                        index,
-                        candidate[4],
-                        selectedElection.address
-                      )
+                      handleVote(e, index, selectedElection.address)
                     }
                     className='absolute bottom-3 right-3 font-semibold hover:bg-black hover:text-white hover:ring hover:ring-white transition duration-300 inline-flex items-center justify-center rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-black h-10 px-4 py-2'
                   >

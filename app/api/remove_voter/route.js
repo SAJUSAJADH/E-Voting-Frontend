@@ -8,7 +8,7 @@ export async function POST(request) {
     const { removeId, name } = await request.json()
 
     // Find the document based on the name
-    const electionLog = await ElectionLog.findOne({ address: name })
+    const electionLog = await ElectionLog.findOne({ address: name, status: true })
 
     if (!electionLog) {
       return NextResponse.json({
@@ -30,7 +30,7 @@ export async function POST(request) {
     }
 
     // Check if voter already voted
-    if (!electionLog.voters.some((voter) => voter.voted === false)) {
+    if (electionLog.voters.some((voter) =>{ voter.voterid === removeId && voter.voted === true})) {
       return NextResponse.json({ message: 'Voter already voted', status: 405 })
     }
 

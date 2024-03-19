@@ -22,11 +22,9 @@ const electionLogSchema = new mongoose.Schema(
       {
         voterid: {
           type: String,
-          required: true,
         },
         voted: {
           type: Boolean,
-          required: true,
         },
       },
     ],

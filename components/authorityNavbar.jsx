@@ -82,7 +82,7 @@ function AuthorityNavbar({ route }) {
       } else if (menu.Link === '' && menu.route === '') {
         openChainModal()
       } else {
-        return
+        router.push(menu.Link)
       }
     }
     return (

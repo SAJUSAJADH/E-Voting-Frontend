@@ -31,34 +31,34 @@ function Candidate_List() {
   })
   const [Loading, setLoading] = useState(false)
   const [candidates, setCandidates] = useState([])
-  const [fetchBlock, setFetchBlock] = useState(false)
+
+  async function validateAuthority() {
+    try {
+      const electionContract = await getElectionContract()
+      const transactionResponse =
+        await electionContract.getDeployedElection(name)
+      if (transactionResponse[0] === contract) {
+        GetNumberofParticipants(transactionResponse[0]).then((response) => {
+          Get_candidates(transactionResponse[0], response[0]).then(
+            (response) => {
+              if (response.length > 0) {
+                setCandidates(response)
+              }
+            }
+          )
+        })
+      } else {
+        console.log('loading....')
+      }
+    } catch (error) {
+      console.log(error)
+      toast(`${error}`, { icon: '🚫' })
+    }
+  }
 
   useEffect(() => {
-    async function validateAuthority() {
-      try {
-        const electionContract = await getElectionContract()
-        const transactionResponse =
-          await electionContract.getDeployedElection(name)
-        if (transactionResponse[0] === contract) {
-          GetNumberofParticipants(transactionResponse[0]).then((response) => {
-            Get_candidates(transactionResponse[0], response[0]).then(
-              (response) => {
-                if (response.length > 0) {
-                  setCandidates(response)
-                }
-              }
-            )
-          })
-        } else {
-          console.log('loading....')
-        }
-      } catch (error) {
-        console.log(error)
-        toast(`${error}`, { icon: '🚫' })
-      }
-    }
     validateAuthority()
-  }, [name, fetchBlock])
+  }, [name])
 
   const pinFileToIPFS = async (file) => {
     noStore()
@@ -111,7 +111,8 @@ function Candidate_List() {
     setLoading(true)
     try {
       const { candidateName, voterId, candidateDescription } = Form
-      if (!candidateName || !voterId || !candidateDescription) {
+      const id = voterId.toUpperCase()
+      if (!candidateName || !id || !candidateDescription) {
         toast.error('Please fill all the fields.')
         setLoading(false)
         return
@@ -121,7 +122,7 @@ function Candidate_List() {
         setLoading(false)
         return
       }
-      if (voterId.length !== 6) {
+      if (id.length !== 10) {
         toast.error('Invalid voter Id.')
         setLoading(false)
         return
@@ -136,7 +137,7 @@ function Candidate_List() {
         const res = await add_Candidate(
           contract,
           candidateName,
-          voterId,
+          id,
           imageHash,
           candidateDescription
         )
@@ -156,7 +157,7 @@ function Candidate_List() {
           vorterIdRef.current.value = ''
           descriptionRef.current.value = ''
           setLoading(false)
-          setFetchBlock(!fetchBlock)
+          validateAuthority()
         }
         if (notOk) {
           toast.error('Candidate not added, Try again.')
@@ -188,7 +189,7 @@ function Candidate_List() {
           vorterIdRef.current.value = ''
           descriptionRef.current.value = ''
           setLoading(false)
-          setFetchBlock(!fetchBlock)
+          validateAuthority()
         }
       })
     } catch (error) {

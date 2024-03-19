@@ -5,31 +5,32 @@ import { NextResponse } from 'next/server'
 export async function POST(request) {
   try {
     await Connect()
-    const { address, electionName, electionDescription } = await request.json()
-    const EmailExist = await ElectionLog.find({ address })
-    const newElectionlog = new ElectionLog({
-      electionname: electionName,
-      electiondescription: electionDescription,
-      address: address,
-      status: true,
-    })
-    if (EmailExist.length > 0) {
-      for (const entry of EmailExist) {
-        if (entry.status === true) {
+    const { name, electionName, electionDescription, action } = await request.json()
+    const ElectionExist = await ElectionLog.find({ address: name })
+    if (ElectionExist.length > 0) {
+      for (const entry of ElectionExist) {
+        if (entry.status === true && action === 'create') {
           return NextResponse.json({
             message: 'Ongoing election found',
             status: 400,
           })
-        } else {
-          const user = await entry.updateOne({ status: 'true' })
+        }
+        if (entry.status === true && action === 'delete') {
+          const deleteEntry = await ElectionLog.deleteOne({ _id: entry._id })
           return NextResponse.json({
             message: 'updated, can create new election',
             status: 200,
-            user,
+            deleteEntry
           })
         }
       }
     }
+    const newElectionlog = new ElectionLog({
+      electionname: electionName,
+      electiondescription: electionDescription,
+      address: name,
+      status: true,
+    })
     const savedLog = await newElectionlog.save()
     return NextResponse.json({
       message: 'can create new election',
