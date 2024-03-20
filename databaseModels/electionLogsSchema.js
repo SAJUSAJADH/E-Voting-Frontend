@@ -14,20 +14,29 @@ const electionLogSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    contract: {
+      type: String,
+      required: true,
+    },
     status: {
       type: Boolean,
       required: true,
     },
-    voters: [
-      {
-        voterid: {
-          type: String,
+    voters: {
+      type: [
+        {
+          voterid: {
+            type: String,
+            required: true,
+          },
+          voted: {
+            type: Boolean,
+            required: true,
+          },
         },
-        voted: {
-          type: Boolean,
-        },
-      },
-    ],
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 )

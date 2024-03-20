@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import {
   FileProtectOutlined,
+  LoadingOutlined,
   UserOutlined,
   UsergroupAddOutlined,
 } from '@ant-design/icons'
@@ -19,6 +20,7 @@ import AuthorityNavbar from '@/components/authorityNavbar'
 import { useSession } from 'next-auth/react'
 import { Get_candidates } from '@/blockchainActions/addCandidate'
 import { Announce_winner } from '@/blockchainActions/announceWinner'
+import Image from 'next/image'
 
 function Authority_Dashboard() {
   const { contract } = useParams()
@@ -27,6 +29,7 @@ function Authority_Dashboard() {
     name: '0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B',
   }
   const [isLoading, setIsLoading] = useState(false)
+  const [winners, setWinners] = useState([])
   const [electionData, setElectionData] = useState({
     electionName: '',
     electiondescription: '',
@@ -123,6 +126,36 @@ function Authority_Dashboard() {
       }
     }
     voters()
+  }, [session])
+
+  function checkStatus() {
+    if (session) {
+      const { name } = session.user
+      fetch('/api/election_status', {
+        cache: 'no-store',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, contract, action: 'check' }),
+      })
+        .then((response) => response.json())
+        .then(async (data) => {
+          const ok = data.status === 205
+          if (ok) {
+            const { status, contract } = data.updatedElection
+            if (status === false) {
+              const res = await Announce_winner(contract)
+              !res.message && setWinners(res)
+            }
+          }
+        })
+        .catch((e) => console.log(e))
+    }
+  }
+
+  useEffect(() => {
+    checkStatus()
   }, [session])
 
   const labels = candidates.map((obj) => obj[0])
@@ -225,8 +258,28 @@ function Authority_Dashboard() {
     setIsLoading(true)
     try {
       const ElectionContract = await getElectionContract()
-      const transactionResponse = await ElectionContract.getDeployedElection(name)
-      Announce_winner(transactionResponse[0]).then((response)=>console.log(response))
+      const transactionResponse =
+        await ElectionContract.getDeployedElection(name)
+      await Announce_winner(transactionResponse[0]).then((response) => {
+        if (!response.message && response.length > 0) {
+          fetch('/api/election_status', {
+            cache: 'no-store',
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, contract, action: 'update' }),
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              const ok = data.status === 200
+              if (ok) {
+                setWinners(response)
+              }
+            })
+            .catch((e) => console.log(e))
+        }
+      })
       setIsLoading(false)
     } catch (error) {
       setIsLoading(false)
@@ -239,17 +292,69 @@ function Authority_Dashboard() {
     <>
       <AuthorityNavbar route='dashboard' />
       <div className='w-full bg-[#353935] pt-28 lg:pt-36 px-3 lg:px-20 min-h-screen grid justify-start items-start pb-8 lg:pb-0'>
-        <div className='grid lg:grid-cols-4 gap-4 w-full'>
+        {winners.length > 0 && (
+          <div className='px-3 rounded-xl bg-[#36454F] justify-center items-center py-3'>
+            <p className='text-white font-medium font-bricolage text-lg lg:text-4xl text-center'>
+              {electionData.electionName}{' '}
+              {winners.length > 1 ? `Winners` : 'Winner'}
+            </p>
+            <div className={`grid lg:grid-cols-${winners.length} gap-4 w-full`}>
+              {winners.map((winner, index) => (
+                <div
+                  key={index}
+                  className='flex flex-col gap-2 justify-center items-center'
+                >
+                  <p className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer text-center'>
+                    {winner[0]}
+                  </p>
+                  <p className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer text-center'>
+                    VoteCount: {parseInt(winner[3])}
+                  </p>
+                  <p className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer text-center'>
+                    Voter Id: {winner[4]}
+                  </p>
+                  <div className='flex justify-between items-center'>
+                    <p className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
+                      Candidate Logo:{' '}
+                    </p>
+                    <Image
+                      src={`https://gateway.pinata.cloud/ipfs/${winner[2]}`}
+                      className='rounded-full'
+                      alt='logo'
+                      width={30}
+                      height={30}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className='mt-4 grid lg:grid-cols-4 gap-4 w-full'>
           <div className='grid gap-16 bg-[#36454F] rounded-xl px-3 py-3'>
             <div className='flex flex-col gap-3 justify-start items-start'>
-              <p onClick={()=>toast(`${electionData.electionName}`,{position:'top-right'})} className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
+              <p
+                onClick={() =>
+                  toast(`${electionData.electionName}`, {
+                    position: 'top-right',
+                  })
+                }
+                className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'
+              >
                 Election Name: {electionData.electionName.substring(0, 20)}
               </p>
               <p className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
                 Election Authority:{' '}
                 {`${name.toString().substring(0, 5)}****${name.toString().substring(name.toString().length - 5)}`}
               </p>
-              <p onClick={()=>toast(`${electionData.electiondescription}`,{position:'top-right'})} className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
+              <p
+                onClick={() =>
+                  toast(`${electionData.electiondescription}`, {
+                    position: 'top-right',
+                  })
+                }
+                className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'
+              >
                 Election Description:{' '}
                 {electionData.electiondescription.substring(0, 15)}
               </p>
@@ -323,13 +428,17 @@ function Authority_Dashboard() {
         </div>
         <div className='w-full mt-4 rounded flex justify-between bg-[#36454F] px-3 py-3'>
           <div className='flex justify-center items-center'>
-          <p className='text-[#a3a3a3] text-center hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
-                Announce the winners of {electionData.electionName}.
-              </p>
+            <p className='text-[#a3a3a3] text-center hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
+              Announce the winners of {electionData.electionName}.
+            </p>
           </div>
           <div className='flex justify-center items-center'>
-            <button onClick={EndElection} className='font-semibold hover:bg-black hover:text-white hover:ring hover:ring-white transition duration-300 inline-flex items-center justify-center rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-black h-10 px-4 py-2'>
-              End Election
+            <button
+              disabled={isLoading}
+              onClick={EndElection}
+              className='font-semibold hover:bg-black hover:text-white hover:ring hover:ring-white transition duration-300 inline-flex items-center justify-center rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-black h-10 px-4 py-2'
+            >
+              {isLoading ? <LoadingOutlined /> : ' End Election'}
             </button>
           </div>
         </div>

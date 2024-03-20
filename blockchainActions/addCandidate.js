@@ -9,23 +9,21 @@ export async function add_Candidate(
 ) {
   try {
     const uniqueElection = await GetEachElectionContract(contract)
-    const success = await uniqueElection.addCandidate(
+    const transactionResponse = await uniqueElection.addCandidate(
       String(name),
       String(description),
       String(imgHash),
       String(voterId)
     )
-    if (success) {
-      return {
-        status: 200,
-        message: 'success',
-      }
-    }
+    await transactionResponse.wait()
+
     return {
-      status: 205,
-      message: 'processing',
+      message: 'success',
+      status: 200,
+      transactionResponse,
     }
   } catch (error) {
+    console.log(error)
     return {
       status: 400,
       message: 'Failed',

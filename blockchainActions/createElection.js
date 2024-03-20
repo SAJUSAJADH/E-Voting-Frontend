@@ -1,6 +1,5 @@
 import { getElectionContract } from './getElectioncontract'
 
-
 export async function Create_election(name, electionName, electionDescription) {
   try {
     const electionContract = await getElectionContract()
@@ -9,21 +8,21 @@ export async function Create_election(name, electionName, electionDescription) {
       electionName,
       electionDescription
     )
-    
+
     // Wait for the transaction to be mined
-    await transactionResponse.wait();
-    
+    await transactionResponse.wait()
+
     return {
       message: 'success',
       status: 200,
-      transactionResponse
-    };
+      transactionResponse,
+    }
   } catch (error) {
-    console.error("Error creating election:", error);
+    console.error('Error creating election:', error)
     return {
       message: 'Election creation failed',
       status: 400,
       error,
-    };
+    }
   }
 }

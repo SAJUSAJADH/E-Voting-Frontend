@@ -78,7 +78,7 @@ function Voters_List() {
         setIsLoading(false)
         return
       }
-      const voted = voters.filter((voter)=>voterId === voter.voterid)
+      const voted = voters.filter((voter) => voterId === voter.voterid)
       if (voted.length !== 0) {
         toast.error('Already added')
         setIsLoading(false)
@@ -139,8 +139,8 @@ function Voters_List() {
         setLoading(false)
         return
       }
-      const voted = voters.filter((voter)=>removeId === voter.voterid)
-      if(voted[0].voted){
+      const voted = voters.filter((voter) => removeId === voter.voterid)
+      if (voted[0].voted) {
         toast.error('Already Voted')
         setLoading(false)
         return

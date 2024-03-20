@@ -1,7 +1,7 @@
 'use client'
 
 import { LoadingOutlined } from '@ant-design/icons'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { signOut, useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
 import { Create_election } from '@/blockchainActions/createElection'
@@ -29,28 +29,17 @@ function Create_Election() {
     },
   })
 
-  const handleFailure = async ()=>{
-    try {
-      const { electionName, electionDescription } = FormData
-      const { name } = session.user
-      console.log('/api/updating')
-      const fetchrequest = await fetch('/api/election_log',{
-        cache:'no-store',
-        method:'POST',
-        headers:{
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          electionName,
-          electionDescription,
-          action:'delete'
-      })
+  const ActiveElection = async (name) => {
+    const response = await fetch('/api/active_elections', {
+      cache: 'no-store',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name }),
     })
-    } catch (error) {
-      console.log(error)
-      return
-    }
+    const data = await response.json()
+    return data
   }
 
   const connectToBlockchain = async (name) => {
@@ -61,11 +50,9 @@ function Create_Election() {
     } catch (error) {
       console.log(error)
       const response = ['', '', 'error']
-      await handleFailure()
       return response
     }
   }
-
 
   const handleChange = (e, name) => {
     setFormData((prevState) => ({ ...prevState, [name]: e.target.value }))
@@ -95,71 +82,145 @@ function Create_Election() {
         electionDescription !== ''
       ) {
         const { name } = session.user
-
-        fetch('/api/election_log', {
-          cache: 'no-store',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name,
-            electionName,
-            electionDescription,
-            action: 'create'
-          }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            const ok = data.message.includes('can create new election')
-            const notOk =
-              data.message.includes('Ongoing election found') ||
-              data.message.includes('Failed to log data')
-            if (ok) {
-
-
-              Create_election(name, electionName, electionDescription).then(
-                async (response) => {          
-                  const created = response.message.includes('success')
-                  const notCreated = response.message.includes('Election creation failed')
-                  if (created) {
-                    try {
-                      const transactionResponse = await connectToBlockchain(name)
-                      transactionResponse[2].includes('Create an election') && router.push('/')
-                      transactionResponse[2].includes('error') && toast.error('Something went wrong')
-                      if (
-                        !transactionResponse[2].includes('Create an election') &&
-                        !transactionResponse[2].includes('error')
-                      ) {
-                        router.push(`/election/${transactionResponse[0]}/authority_dashboard`)
-                      }
-                    } catch (error) {
-                      await handleFailure()
-                      toast.error('Ethereum network busy.')
-                      setIsLoading(false)
-                    }          
-                  } else if (notCreated) {
-                    await handleFailure()
-                    toast.error('Election creation failed. Try again.')
-                    setIsLoading(false)
-                  } else {
-                    await handleFailure()
-                    toast.error('Something went wrong. Try again.')
-                    setIsLoading(false)
-                  }
+        const Data = await ActiveElection(name)
+        if (Data.message === 'Already have an election') {
+          setIsLoading(false)
+          toast.error('You already have an Ongoing Election')
+          return
+        }
+        Create_election(name, electionName, electionDescription).then(
+          async (response) => {
+            const created = response.message.includes('success')
+            const notCreated = response.message.includes(
+              'Election creation failed'
+            )
+            if (created) {
+              try {
+                const transactionResponse = await connectToBlockchain(name)
+                if (transactionResponse[2].includes('Create an election')) {
                 }
-              )
-
-
-            }
-            if (notOk) {
-              toast.error('You already have an Ongoing Election')
+                if (transactionResponse[2].includes('error')) {
+                  toast.error('Something went wrong')
+                }
+                if (
+                  !transactionResponse[2].includes('Create an election') &&
+                  !transactionResponse[2].includes('error')
+                ) {
+                  fetch('/api/election_log', {
+                    cache: 'no-store',
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      name,
+                      electionName,
+                      electionDescription,
+                      contract: transactionResponse[0],
+                    }),
+                  })
+                    .then((response) => response.json())
+                    .then((data) => {
+                      const ok = data.message.includes(
+                        'can create new election'
+                      )
+                      const notOk =
+                        data.message.includes('Ongoing election found') ||
+                        data.message.includes('Failed to log data')
+                      if (ok) {
+                        router.push(
+                          `/election/${transactionResponse[0]}/authority_dashboard`
+                        )
+                      }
+                      if (notOk) {
+                        setIsLoading(false)
+                        toast.error('Election creation failed. Try again')
+                      }
+                    })
+                }
+              } catch (error) {
+                toast.error('Ethereum network busy.')
+                setIsLoading(false)
+              }
+            } else if (notCreated) {
+              toast.error('Election creation failed. Try again.')
+              setIsLoading(false)
+            } else {
+              toast.error('Something went wrong. Try again.')
               setIsLoading(false)
             }
-          })
-          .catch((error) => {
-            console.error('Error:', error)
-          })
+          }
+        )
+
+        // fetch('/api/election_log', {
+        //   cache: 'no-store',
+        //   method: 'POST',
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //   },
+        //   body: JSON.stringify({
+        //     name,
+        //     electionName,
+        //     electionDescription,
+        //     action: 'create',
+        //   }),
+        // })
+        //   .then((response) => response.json())
+        //   .then((data) => {
+        //     const ok = data.message.includes('can create new election')
+        //     const notOk =
+        //       data.message.includes('Ongoing election found') ||
+        //       data.message.includes('Failed to log data')
+        //     if (ok) {
+        //       Create_election(name, electionName, electionDescription).then(
+        //         async (response) => {
+        //           const created = response.message.includes('success')
+        //           const notCreated = response.message.includes(
+        //             'Election creation failed'
+        //           )
+        //           if (created) {
+        //             try {
+        //               const transactionResponse =
+        //                 await connectToBlockchain(name)
+        //               transactionResponse[2].includes('Create an election') &&
+        //                 router.push('/')
+        //               transactionResponse[2].includes('error') &&
+        //                 toast.error('Something went wrong')
+        //               if (
+        //                 !transactionResponse[2].includes(
+        //                   'Create an election'
+        //                 ) &&
+        //                 !transactionResponse[2].includes('error')
+        //               ) {
+        //                 router.push(
+        //                   `/election/${transactionResponse[0]}/authority_dashboard`
+        //                 )
+        //               }
+        //             } catch (error) {
+        //               await handleFailure()
+        //               toast.error('Ethereum network busy.')
+        //               setIsLoading(false)
+        //             }
+        //           } else if (notCreated) {
+        //             await handleFailure()
+        //             toast.error('Election creation failed. Try again.')
+        //             setIsLoading(false)
+        //           } else {
+        //             await handleFailure()
+        //             toast.error('Something went wrong. Try again.')
+        //             setIsLoading(false)
+        //           }
+        //         }
+        //       )
+        //     }
+        //     if (notOk) {
+        //       toast.error('You already have an Ongoing Election')
+        //       setIsLoading(false)
+        //     }
+        //   })
+        //   .catch((error) => {
+        //     console.error('Error:', error)
+        //   })
       }
     } catch (error) {
       setIsLoading(false)
@@ -195,7 +256,10 @@ function Create_Election() {
               </p>
             </div>
             <div className='hidden lg:flex justify-between gap-6'>
-              <p onClick={async ()=>await disconnect()} className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
+              <p
+                onClick={async () => await disconnect()}
+                className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'
+              >
                 Logout
               </p>
             </div>
