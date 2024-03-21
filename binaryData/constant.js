@@ -1,5 +1,5 @@
 import Electionabi from './Election.json'
-import Electionfactabi from './Electionfact.json'
+import Electionfactabi from './ElectionFact.json'
 
 const ElectionABI = Electionabi.abi
 const ElectionFactABI = Electionfactabi.abi
