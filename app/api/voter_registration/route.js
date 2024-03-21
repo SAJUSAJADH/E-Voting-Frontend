@@ -15,28 +15,25 @@ export async function POST(request) {
       zipCode,
       digitalWallet,
     } = await request.json()
-    const isRegistered = await Voter.findOne({ voterId })
-    const isWalletLinked = await Voter.findOne({ digitalWallet })
-    if (isRegistered) {
-      const query = { voterId: voterId }
-      const update = {
-        name: fullname,
-        address: address,
-        city: city,
-        district: district,
-        state: state,
-        zipCode: zipCode,
-      }
-      const updatedVoter = await Voter.updateOne(query, update)
+
+    const alreadyRegistered = await Voter.findOne({ voterId })
+
+    const alreadyLinked = await Voter.findOne({ digitalWallet })
+
+    if (alreadyRegistered) {
       return NextResponse.json({
         message: 'already registered',
-        status: 205,
-        updatedVoter,
+        status: 405,
       })
     }
-    if (isWalletLinked) {
-      return NextResponse.json({ message: 'already linked', status: 405 })
+
+    if (alreadyLinked) {
+      return NextResponse.json({
+        message: 'already Linked walletAddress',
+        status: 405,
+      })
     }
+
     const newVoter = new Voter({
       name: fullname,
       voterId: voterId,
@@ -54,6 +51,10 @@ export async function POST(request) {
       savedVoter,
     })
   } catch (error) {
-    return NextResponse.json({ message: 'Network error', status: 400, error })
+    return NextResponse.json({
+      message: 'Internal server error',
+      status: 500,
+      error,
+    })
   }
 }

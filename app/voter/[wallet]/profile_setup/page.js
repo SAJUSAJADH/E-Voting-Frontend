@@ -22,18 +22,10 @@ function Profile_Setup() {
     city: '',
   })
   const [isLoading, setIsLoading] = useState(false)
-  const [componentMount, setComponentMount] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const savedComponentMount = localStorage.getItem('componentMount')
-      return savedComponentMount
-        ? JSON.parse(savedComponentMount)
-        : {
-            registrationMount: true,
-            walletLinkMount: false,
-            faceRecognitionMount: false,
-          }
-    }
-    return null
+  const [componentMount, setComponentMount] = useState({
+    registrationMount: false,
+    walletLinkMount: false,
+    faceRecognitionMount: true,
   })
   const nameRef = useRef(null)
   const voterIdRef = useRef(null)
@@ -53,12 +45,6 @@ function Profile_Setup() {
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
   }, [])
-
-  useEffect(() => {
-    if (componentMount) {
-      localStorage.setItem('componentMount', JSON.stringify(componentMount))
-    }
-  }, [componentMount])
 
   const options = states.map((state) => ({
     label: state.label,
@@ -152,13 +138,15 @@ function Profile_Setup() {
       })
         .then((response) => response.json())
         .then((data) => {
+          const ok = (data?.message).includes('registered successfully')
+          const alreadyRegistered =
+            (data?.message).includes('already registered')
+          const alreadyLinked = (data?.message).includes(
+            'already Linked walletAddress'
+          )
+          const notOk = (data?.message).includes('Internal server error')
           setIsLoading(false)
-          const notOk = (data?.message).includes('Network error')
-          const ok =
-            (data?.message).includes('already registered') ||
-            (data?.message).includes('registered successfully')
-          const linked = (data?.message).includes('already linked')
-          notOk && toast.error('No internet Connection', { icon: '🚫' })
+
           if (ok) {
             setComponentMount({
               registrationMount: false,
@@ -167,11 +155,19 @@ function Profile_Setup() {
             })
             toast.success('voterId registered successfully')
           }
-          if (linked) {
-            toast.error(
-              'This wallet is linked with other voterId. please use another wallet.',
-              { icon: '🚫' }
-            )
+
+          if (alreadyRegistered) {
+            toast.error('Voter Already Registered.')
+          }
+
+          if (alreadyLinked) {
+            toast.error('This wallet is linked with other voterId.', {
+              icon: '🚫',
+            })
+          }
+
+          if (notOk) {
+            toast.error('No internet Connection', { icon: '🚫' })
           }
         })
     } catch (error) {
@@ -186,9 +182,9 @@ function Profile_Setup() {
     setIsLoading(true)
     try {
       setComponentMount({
-        registrationMount: false,
+        registrationMount: true,
         walletLinkMount: false,
-        faceRecognitionMount: true,
+        faceRecognitionMount: false,
       })
       setIsLoading(false)
     } catch (error) {
@@ -217,7 +213,6 @@ function Profile_Setup() {
           const notOk = (data?.message).includes('not found')
           const networkError = (data?.message).includes('Network busy')
           if (ok) {
-            setIsLoading(false)
             router.push(`/voter/${name}/dashboard`)
           }
           if (notOk) {
@@ -269,13 +264,13 @@ function Profile_Setup() {
         <div className='flex justify-center items-center w-full'>
           <div className='flex pt-24 lg:pt-36 justify-between items-center w-2/3'>
             <button
-              className={`bg-[#81fbe9] ${componentMount.registrationMount == false && 'bg-opacity-50  cursor-not-allowed'} text-black font-bold py-1 px-3 rounded-full`}
+              className={`bg-[#81fbe9] ${componentMount.faceRecognitionMount == false && 'bg-opacity-50  cursor-not-allowed'} text-black font-bold py-1 px-3 rounded-full`}
             >
               1
             </button>
             <div className='flex border-t border-b border-[#81fbe9] h-0 w-full'></div>
             <button
-              className={`bg-[#81fbe9] ${componentMount.registrationMount == false && componentMount.walletLinkMount == false && 'bg-opacity-60 cursor-not-allowed'} text-black font-bold py-1 px-3 rounded-full`}
+              className={`bg-[#81fbe9] ${componentMount.registrationMount == false && componentMount.faceRecognitionMount == false && 'bg-opacity-60 cursor-not-allowed'} text-black font-bold py-1 px-3 rounded-full`}
             >
               2
             </button>
@@ -488,10 +483,14 @@ function Profile_Setup() {
                             <div className='inline-flex items-end'>
                               <button
                                 disabled={isLoading}
-                                onClick={secondPhase}
+                                onClick={completeRegistration}
                                 className='bg-[#81fbe9] box-shadow text-black font-bold py-2 px-4 rounded'
                               >
-                                {isLoading ? <LoadingOutlined /> : 'Continue'}
+                                {isLoading ? (
+                                  <LoadingOutlined />
+                                ) : (
+                                  'Registration Completed'
+                                )}
                               </button>
                             </div>
                           </div>
@@ -532,7 +531,7 @@ function Profile_Setup() {
                       <div className='lg:col-span-2 h-[40vh] flex justify-end items-end'>
                         <button
                           disabled={isLoading}
-                          onClick={completeRegistration}
+                          onClick={secondPhase}
                           className='bg-[#81fbe9] box-shadow text-black font-bold py-2 px-4 rounded'
                         >
                           {isLoading ? <LoadingOutlined /> : 'Continue'}

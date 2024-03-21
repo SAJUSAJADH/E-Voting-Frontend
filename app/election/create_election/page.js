@@ -151,76 +151,6 @@ function Create_Election() {
             }
           }
         )
-
-        // fetch('/api/election_log', {
-        //   cache: 'no-store',
-        //   method: 'POST',
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //   },
-        //   body: JSON.stringify({
-        //     name,
-        //     electionName,
-        //     electionDescription,
-        //     action: 'create',
-        //   }),
-        // })
-        //   .then((response) => response.json())
-        //   .then((data) => {
-        //     const ok = data.message.includes('can create new election')
-        //     const notOk =
-        //       data.message.includes('Ongoing election found') ||
-        //       data.message.includes('Failed to log data')
-        //     if (ok) {
-        //       Create_election(name, electionName, electionDescription).then(
-        //         async (response) => {
-        //           const created = response.message.includes('success')
-        //           const notCreated = response.message.includes(
-        //             'Election creation failed'
-        //           )
-        //           if (created) {
-        //             try {
-        //               const transactionResponse =
-        //                 await connectToBlockchain(name)
-        //               transactionResponse[2].includes('Create an election') &&
-        //                 router.push('/')
-        //               transactionResponse[2].includes('error') &&
-        //                 toast.error('Something went wrong')
-        //               if (
-        //                 !transactionResponse[2].includes(
-        //                   'Create an election'
-        //                 ) &&
-        //                 !transactionResponse[2].includes('error')
-        //               ) {
-        //                 router.push(
-        //                   `/election/${transactionResponse[0]}/authority_dashboard`
-        //                 )
-        //               }
-        //             } catch (error) {
-        //               await handleFailure()
-        //               toast.error('Ethereum network busy.')
-        //               setIsLoading(false)
-        //             }
-        //           } else if (notCreated) {
-        //             await handleFailure()
-        //             toast.error('Election creation failed. Try again.')
-        //             setIsLoading(false)
-        //           } else {
-        //             await handleFailure()
-        //             toast.error('Something went wrong. Try again.')
-        //             setIsLoading(false)
-        //           }
-        //         }
-        //       )
-        //     }
-        //     if (notOk) {
-        //       toast.error('You already have an Ongoing Election')
-        //       setIsLoading(false)
-        //     }
-        //   })
-        //   .catch((error) => {
-        //     console.error('Error:', error)
-        //   })
       }
     } catch (error) {
       setIsLoading(false)
@@ -334,7 +264,13 @@ function Create_Election() {
                     </div>
                   </div>
                 </div>
-
+                {isLoading && (
+                  <div className='mt-4 flex items-center justify-center gap-x-2 my-3'>
+                    <p className='text-[#a3a3a3] text-sm font-normal font-bricolage px-2 text-center'>
+                      This may take some time.
+                    </p>
+                  </div>
+                )}
                 <div className='mt-4 flex items-center justify-center gap-x-2'>
                   <button
                     onClick={createElection}

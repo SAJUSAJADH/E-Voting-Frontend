@@ -12,6 +12,7 @@ import { GetNumberofParticipants } from '@/blockchainActions/getElectionData'
 import { getElectionContract } from '@/blockchainActions/getElectioncontract'
 import AuthorityNavbar from '@/components/authorityNavbar'
 import { useSession } from 'next-auth/react'
+import { PreLoader } from '@/components/preLoader'
 
 function Candidate_List() {
   const { contract } = useParams()
@@ -23,6 +24,7 @@ function Candidate_List() {
   const nameRef = useRef(null)
   const vorterIdRef = useRef(null)
   const descriptionRef = useRef(null)
+  const [preLoading, setPreLoading] = useState(true)
   const [selectedFile, setSelectedFile] = useState(null)
   const [Form, setForm] = useState({
     candidateName: '',
@@ -44,13 +46,21 @@ function Candidate_List() {
               if (response.length > 0) {
                 setCandidates(response)
               }
+              setTimeout(() => {
+                setPreLoading(false)
+              }, 2000)
             }
           )
         })
       } else {
-        console.log('loading....')
+        setTimeout(() => {
+          setPreLoading(false)
+        }, 2000)
       }
     } catch (error) {
+      setTimeout(() => {
+        setPreLoading(false)
+      }, 2000)
       console.log(error)
       toast(`${error}`, { icon: '🚫' })
     }
@@ -103,7 +113,14 @@ function Candidate_List() {
   }
 
   const handleChange = (e, name) => {
-    setForm((prevState) => ({ ...prevState, [name]: e.target.value }))
+    let value
+
+    if (name === 'voterId') {
+      value = e.target.value.replace(/[^a-zA-Z0-9]/g, '')
+    } else {
+      value = e.target.value
+    }
+    setForm((prevState) => ({ ...prevState, [name]: value }))
   }
 
   const addCandidate = async (e) => {
@@ -160,7 +177,7 @@ function Candidate_List() {
           validateAuthority()
         }
         if (notOk) {
-          toast.error('Candidate not added, Try again.')
+          toast.error('Candidate not added.')
           setForm({
             candidateName: '',
             voterId: '',
@@ -252,170 +269,182 @@ function Candidate_List() {
     )
   })
 
-  return (
-    <>
-      <AuthorityNavbar route={'candidates_list'} />
-      <div className='w-full bg-[#353935] pt-28 lg:pt-36 px-3 lg:px-20 min-h-screen grid justify-center items-center'>
-        <div className='w-full flex justify-center items-start'>
-          <div className='flex flex-col px-2 lg:px-8 rounded-lg py-2 lg:py-8 gap-8 bg-black z-20 shadow-xl'>
-            <div className='flex flex-col'>
-              <h3 className='text-xl font-semibold leading-6 text-white/50 tracking-tighter'>
-                Add Candidate
-              </h3>
-              <p className='mt-1.5 text-sm font-medium text-white/50'>
-                Add eligible candidates to the election.
-              </p>
-            </div>
-            <div className='flex flex-col'>
-              <form>
-                <div className='grid lg:flex lg:gap-2'>
-                  <div className='group relative rounded-lg border focus-within:border-sky-200 px-3 pb-1.5 pt-2.5 duration-200 focus-within:ring focus-within:ring-sky-300/30'>
-                    <div className='flex justify-between'>
-                      <label className='text-xs font-medium text-muted-foreground group-focus-within:text-white text-gray-400'>
-                        Candidate name
-                      </label>
-                      <div className='absolute right-3 translate-y-2 text-green-200'>
-                        <svg
-                          xmlns='http://www.w3.org/2000/svg'
-                          viewBox='0 0 24 24'
-                          fill='currentColor'
-                          className='w-6 h-6'
-                        >
-                          <path
-                            fillRule='evenodd'
-                            d='M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z'
-                            clipRule='evenodd'
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                    <input
-                      onChange={(e) => handleChange(e, 'candidateName')}
-                      ref={nameRef}
-                      type='text'
-                      name='candidateName'
-                      placeholder='Candidate name'
-                      autoComplete='off'
-                      className='block w-full text-gray-400 border-0 bg-transparent p-0 text-sm file:my-1 file:rounded-full file:border-0 file:bg-accent file:px-4 file:py-2 file:font-medium placeholder:text-muted-foreground/90 focus:outline-none focus:ring-0 sm:leading-7 text-foreground'
-                    />
-                  </div>
-                  <div className='group mt-4 lg:mt-0 relative rounded-lg border focus-within:border-sky-200 px-3 pb-1.5 pt-2.5 duration-200 focus-within:ring focus-within:ring-sky-300/30'>
-                    <div className='flex justify-between'>
-                      <label className='text-xs font-medium text-muted-foreground group-focus-within:text-white text-gray-400'>
-                        Voter Id
-                      </label>
-                      <div className='absolute right-3 translate-y-2 text-green-200'>
-                        <svg
-                          xmlns='http://www.w3.org/2000/svg'
-                          viewBox='0 0 24 24'
-                          fill='currentColor'
-                          className='w-6 h-6'
-                        >
-                          <path
-                            fillRule='evenodd'
-                            d='M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z'
-                            clipRule='evenodd'
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                    <input
-                      onChange={(e) => handleChange(e, 'voterId')}
-                      ref={vorterIdRef}
-                      type='text'
-                      name='voterId'
-                      placeholder='Voter Id'
-                      autoComplete='off'
-                      className='block w-full text-gray-400 border-0 bg-transparent p-0 text-sm file:my-1 file:rounded-full file:border-0 file:bg-accent file:px-4 file:py-2 file:font-medium placeholder:text-muted-foreground/90 focus:outline-none focus:ring-0 sm:leading-7 text-foreground'
-                    />
-                  </div>
-                  <div className='group mt-4 lg:mt-0 relative rounded-lg border focus-within:border-sky-200 px-3 pb-1.5 pt-2.5 duration-200 focus-within:ring focus-within:ring-sky-300/30'>
-                    <div className='flex justify-between'>
-                      <div className='absolute right-3 translate-y-2 text-green-200'>
-                        <svg
-                          xmlns='http://www.w3.org/2000/svg'
-                          viewBox='0 0 24 24'
-                          fill='currentColor'
-                          className='w-6 h-6'
-                        >
-                          <path
-                            fillRule='evenodd'
-                            d='M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z'
-                            clipRule='evenodd'
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                    <input
-                      onChange={(e) => ImageHashing(e)}
-                      ref={fileInputRef}
-                      type='file'
-                      name='logo'
-                      accept='image/jpeg'
-                      autoComplete='off'
-                      className='block w-full cursor-pointer text-gray-400 border-0 bg-transparent p-0 text-sm file:my-1 file:rounded-full file:border-0 file:bg-accent file:px-4 file:py-2 file:font-medium placeholder:text-muted-foreground/90 focus:outline-none focus:ring-0 sm:leading-7 text-foreground'
-                    />
-                  </div>
-                </div>
-                <div className='mt-4'>
-                  <div>
+  if (preLoading) {
+    return <PreLoader />
+  } else {
+    return (
+      <>
+        <AuthorityNavbar route={'candidates_list'} />
+        <div className='w-full bg-[#353935] pt-28 lg:pt-36 px-3 lg:px-20 min-h-screen grid justify-center items-center'>
+          <div className='w-full flex justify-center items-start'>
+            <div className='flex flex-col px-2 lg:px-8 rounded-lg py-2 lg:py-8 gap-8 bg-black z-20 shadow-xl'>
+              <div className='flex flex-col'>
+                <h3 className='text-xl font-semibold leading-6 text-white/50 tracking-tighter'>
+                  Add Candidate
+                </h3>
+                <p className='mt-1.5 text-sm font-medium text-white/50'>
+                  Add eligible candidates to the election.
+                </p>
+              </div>
+              <div className='flex flex-col'>
+                <form>
+                  <div className='grid lg:flex lg:gap-2'>
                     <div className='group relative rounded-lg border focus-within:border-sky-200 px-3 pb-1.5 pt-2.5 duration-200 focus-within:ring focus-within:ring-sky-300/30'>
                       <div className='flex justify-between'>
                         <label className='text-xs font-medium text-muted-foreground group-focus-within:text-white text-gray-400'>
-                          Candidate Description
+                          Candidate name
                         </label>
+                        <div className='absolute right-3 translate-y-2 text-green-200'>
+                          <svg
+                            xmlns='http://www.w3.org/2000/svg'
+                            viewBox='0 0 24 24'
+                            fill='currentColor'
+                            className='w-6 h-6'
+                          >
+                            <path
+                              fillRule='evenodd'
+                              d='M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z'
+                              clipRule='evenodd'
+                            />
+                          </svg>
+                        </div>
                       </div>
-                      <div className='flex items-center'>
-                        <textarea
-                          onChange={(e) =>
-                            handleChange(e, 'candidateDescription')
-                          }
-                          ref={descriptionRef}
-                          row={6}
-                          style={{ resize: 'none' }}
-                          type='text'
-                          placeholder='Candidate description'
-                          name='candidateDescription'
-                          className='block text-gray-400 w-full border-0 bg-transparent p-0 text-sm file:my-1 placeholder:text-muted-foreground/90 focus:outline-none focus:ring-0 focus:ring-teal-500 sm:leading-7 text-foreground'
-                        />
+                      <input
+                        onChange={(e) => handleChange(e, 'candidateName')}
+                        ref={nameRef}
+                        type='text'
+                        name='candidateName'
+                        placeholder='Candidate name'
+                        autoComplete='off'
+                        className='block w-full text-gray-400 border-0 bg-transparent p-0 text-sm file:my-1 file:rounded-full file:border-0 file:bg-accent file:px-4 file:py-2 file:font-medium placeholder:text-muted-foreground/90 focus:outline-none focus:ring-0 sm:leading-7 text-foreground'
+                      />
+                    </div>
+                    <div className='group mt-4 lg:mt-0 relative rounded-lg border focus-within:border-sky-200 px-3 pb-1.5 pt-2.5 duration-200 focus-within:ring focus-within:ring-sky-300/30'>
+                      <div className='flex justify-between'>
+                        <label className='text-xs font-medium text-muted-foreground group-focus-within:text-white text-gray-400'>
+                          Voter Id
+                        </label>
+                        <div className='absolute right-3 translate-y-2 text-green-200'>
+                          <svg
+                            xmlns='http://www.w3.org/2000/svg'
+                            viewBox='0 0 24 24'
+                            fill='currentColor'
+                            className='w-6 h-6'
+                          >
+                            <path
+                              fillRule='evenodd'
+                              d='M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z'
+                              clipRule='evenodd'
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                      <input
+                        onChange={(e) => handleChange(e, 'voterId')}
+                        ref={vorterIdRef}
+                        type='text'
+                        name='voterId'
+                        value={Form.voterId}
+                        placeholder='Voter Id'
+                        autoComplete='off'
+                        className='block w-full text-gray-400 border-0 bg-transparent p-0 text-sm file:my-1 file:rounded-full file:border-0 file:bg-accent file:px-4 file:py-2 file:font-medium placeholder:text-muted-foreground/90 focus:outline-none focus:ring-0 sm:leading-7 text-foreground'
+                      />
+                    </div>
+                    <div className='group mt-4 lg:mt-0 relative rounded-lg border focus-within:border-sky-200 px-3 pb-1.5 pt-2.5 duration-200 focus-within:ring focus-within:ring-sky-300/30'>
+                      <div className='flex justify-between'>
+                        <div className='absolute right-3 translate-y-2 text-green-200'>
+                          <svg
+                            xmlns='http://www.w3.org/2000/svg'
+                            viewBox='0 0 24 24'
+                            fill='currentColor'
+                            className='w-6 h-6'
+                          >
+                            <path
+                              fillRule='evenodd'
+                              d='M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z'
+                              clipRule='evenodd'
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                      <input
+                        onChange={(e) => ImageHashing(e)}
+                        ref={fileInputRef}
+                        type='file'
+                        name='logo'
+                        accept='image/jpeg'
+                        autoComplete='off'
+                        className='block w-full cursor-pointer text-gray-400 border-0 bg-transparent p-0 text-sm file:my-1 file:rounded-full file:border-0 file:bg-accent file:px-4 file:py-2 file:font-medium placeholder:text-muted-foreground/90 focus:outline-none focus:ring-0 sm:leading-7 text-foreground'
+                      />
+                    </div>
+                  </div>
+                  <div className='mt-4'>
+                    <div>
+                      <div className='group relative rounded-lg border focus-within:border-sky-200 px-3 pb-1.5 pt-2.5 duration-200 focus-within:ring focus-within:ring-sky-300/30'>
+                        <div className='flex justify-between'>
+                          <label className='text-xs font-medium text-muted-foreground group-focus-within:text-white text-gray-400'>
+                            Candidate Description
+                          </label>
+                        </div>
+                        <div className='flex items-center'>
+                          <textarea
+                            onChange={(e) =>
+                              handleChange(e, 'candidateDescription')
+                            }
+                            ref={descriptionRef}
+                            row={6}
+                            style={{ resize: 'none' }}
+                            type='text'
+                            placeholder='Candidate description'
+                            name='candidateDescription'
+                            className='block text-gray-400 w-full border-0 bg-transparent p-0 text-sm file:my-1 placeholder:text-muted-foreground/90 focus:outline-none focus:ring-0 focus:ring-teal-500 sm:leading-7 text-foreground'
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className='mt-4 flex items-center justify-center gap-x-2'>
-                  <button
-                    onClick={addCandidate}
-                    className='font-semibold hover:bg-black hover:text-white hover:ring hover:ring-white transition duration-300 inline-flex items-center justify-center rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-black h-10 px-4 py-2'
-                    type='submit'
-                  >
-                    {Loading ? <LoadingOutlined /> : 'Add Candidate'}
-                  </button>
-                </div>
-              </form>
+                  {Loading && (
+                    <div className='mt-4 flex items-center justify-center gap-x-2 my-3'>
+                      <p className='text-[#a3a3a3] text-sm font-normal font-bricolage px-2 text-center'>
+                        This may take some time.
+                      </p>
+                    </div>
+                  )}
+                  <div className='mt-4 flex items-center justify-center gap-x-2'>
+                    <button
+                      onClick={addCandidate}
+                      className='font-semibold hover:bg-black hover:text-white hover:ring hover:ring-white transition duration-300 inline-flex items-center justify-center rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-white text-black h-10 px-4 py-2'
+                      type='submit'
+                    >
+                      {Loading ? <LoadingOutlined /> : 'Add Candidate'}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <div className='w-full bg-[#353935] px-3 lg:px-8 flex flex-col justify-center items-center pb-8'>
-        <div className='flex w-full justify-center pb-10'>
-          <p className='text-white font-medium font-bricolage text-lg lg:text-4xl xl:text-5xl'>
-            Candidates List
-          </p>
-        </div>
-        {candidates.length == 0 ? (
-          <div className='h-[10vh] px-3 flex justify-center items-center'>
-            <p className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
-              No Candidates added yet.
+        <div className='w-full bg-[#353935] px-3 lg:px-8 flex flex-col justify-center items-center pb-8'>
+          <div className='flex w-full justify-center pb-10'>
+            <p className='text-white font-medium font-bricolage text-lg lg:text-4xl xl:text-5xl'>
+              Candidates List
             </p>
           </div>
-        ) : (
-          <div className='grid md:grid-cols-2 lg;grid-cols-3 xl:grid-cols-4 gap-2 w-full'>
-            {candidateMapping}
-          </div>
-        )}
-      </div>
-    </>
-  )
+          {candidates.length == 0 ? (
+            <div className='h-[10vh] px-3 flex justify-center items-center'>
+              <p className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'>
+                No Candidates added yet.
+              </p>
+            </div>
+          ) : (
+            <div className='grid md:grid-cols-2 lg;grid-cols-3 xl:grid-cols-4 gap-2 w-full'>
+              {candidateMapping}
+            </div>
+          )}
+        </div>
+      </>
+    )
+  }
 }
 
 export default Candidate_List

@@ -92,3 +92,16 @@
   background-color: #a3a3a3; /* background color of the scrollbar thumb */
   border-radius: 5px; /* border radius of the scrollbar thumb */
 }
+
+@keyframes -animate-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.-animate-spin{
+  animation: spin 1s reverse infinite;
+}

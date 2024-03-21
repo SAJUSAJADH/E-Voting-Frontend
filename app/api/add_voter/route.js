@@ -17,7 +17,7 @@ export async function POST(request) {
       })
     }
 
-    if (electionLog.status === 'false') {
+    if (electionLog.status === false) {
       return NextResponse.json({ message: 'Election closed', status: 405 })
     }
 

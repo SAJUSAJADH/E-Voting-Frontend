@@ -236,10 +236,10 @@ export default function Home() {
                           setUserType(tag)
                           openConnectModal()
                         }}
-                        className='bg-[#81fbe9] box-shadow px-10 text-black flex justify-center py-3 rounded items-center gap-3'
+                        className='bg-[#81fbe9] box-shadow px-14 text-black flex justify-center py-3 rounded items-center gap-3'
                         type='button'
                       >
-                        Voter <UsergroupAddOutlined />
+                        Voter <UsergroupAddOutlined />{' '}
                       </button>
                     )
                   }
