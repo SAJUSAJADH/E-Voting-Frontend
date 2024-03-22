@@ -64,10 +64,9 @@ export function Footer() {
         </div>
         <div className='w-4/5'>
           <p className='text-white text-sm font-poppins text-opacity-60'>
-            Any inquires for Votechain - Contact{' '}
+            For any inquires to Votechain Team - Contact{' '}
             <span className='text-white text-opacity-100 font-semibold hover:text-opacity-60 tracking-widest ps-2'>
               <a href='https://evotechain.vercel.app/'>
-                {' '}
                 evotechain.vercel.app
               </a>
             </span>
