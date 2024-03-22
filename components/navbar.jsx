@@ -4,7 +4,7 @@ import { CloseOutlined, MenuOutlined, RightOutlined } from '@ant-design/icons'
 import React from 'react'
 import { useRouter } from 'next/navigation'
 
-function Navbar({route}) {
+function Navbar({ route }) {
   const [isToggle, setIsToggle] = React.useState(false)
   const router = useRouter()
 
@@ -31,12 +31,12 @@ function Navbar({route}) {
   }
 
   const Menu = [
-    { navName: 'Home', Link: '/', route: "home" },
-    { navName: 'Governance', Link: '/governance', route: "governance" },
-    { navName: 'Community', Link: '/community', route: "community" },
-    { navName: 'About', Link: '/about', route: "about" },
-    { navName: 'Blog', Link: '/blogs', route: "blogs" },
-    { navName: 'FAQ', Link: '/faq', route: "faq" },
+    { navName: 'Home', Link: '/', route: 'home' },
+    { navName: 'Governance', Link: '/governance', route: 'governance' },
+    { navName: 'Community', Link: '/community', route: 'community' },
+    { navName: 'About', Link: '/about', route: 'about' },
+    { navName: 'Blog', Link: '/blogs', route: 'blogs' },
+    { navName: 'FAQ', Link: '/faq', route: 'faq' },
   ]
 
   const MenuMapping = Menu.map((menu, index) => {
