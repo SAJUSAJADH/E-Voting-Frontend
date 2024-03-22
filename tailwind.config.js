@@ -15,6 +15,10 @@ module.exports = {
     fontFamily: {
       bricolage: ['Bricolage Grotesque, sans-serif'],
       montserrat: ['Montserrat, sans-serif'],
+      lexend: "Lexend",
+      roboto: ["Roboto Slab", "serif"],
+      marryweather: ["Merriweather Sans", "sans-serif"],
+      poppins: ["Poppins, sans-serif"],
     },
   },
   plugins: [],

@@ -1,4 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Merriweather+Sans&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -104,4 +107,8 @@
 
 .-animate-spin{
   animation: spin 1s reverse infinite;
+}
+
+.governance{
+  animation: transitionIn 2s;
 }

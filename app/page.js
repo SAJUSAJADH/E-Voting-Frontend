@@ -1,6 +1,6 @@
 'use client'
 
-import Footer from '@/components/footer'
+import { Footer } from '@/components/footer'
 import Navbar from '@/components/navbar'
 import {
   DashboardOutlined,
@@ -268,7 +268,7 @@ export default function Home() {
   return (
     <>
       <div className='bg-[#0e0e0e] min-h-screen z-0'>
-        <Navbar />
+        <Navbar route={'home'}/>
         <div className='w-full min-h-screen flex flex-col gap-16 justify-center items-center relative overflow-hidden'>
           <div className='lg:w-2/3 px-3 lg:px-0 -mt-16 lg:mt-0 text-center flex flex-col gap-4 justify-center items-center z-20'>
             <p className='text-white text-3xl lg:text-4xl xl:text-6xl font-bricolage font-medium'>

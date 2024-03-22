@@ -4,7 +4,7 @@ import { CloseOutlined, MenuOutlined, RightOutlined } from '@ant-design/icons'
 import React from 'react'
 import { useRouter } from 'next/navigation'
 
-function Navbar() {
+function Navbar({route}) {
   const [isToggle, setIsToggle] = React.useState(false)
   const router = useRouter()
 
@@ -31,11 +31,12 @@ function Navbar() {
   }
 
   const Menu = [
-    { navName: 'Home', Link: '/' },
-    { navName: 'About', Link: '#about' },
-    { navName: 'How it Works', Link: '#howitworks' },
-    { navName: 'Benifits', Link: '#benifits' },
-    { navName: 'Contact', Link: '#contact' },
+    { navName: 'Home', Link: '/', route: "home" },
+    { navName: 'Governance', Link: '/governance', route: "governance" },
+    { navName: 'Community', Link: '/community', route: "community" },
+    { navName: 'About', Link: '/about', route: "about" },
+    { navName: 'Blog', Link: '/blogs', route: "blogs" },
+    { navName: 'FAQ', Link: '/faq', route: "faq" },
   ]
 
   const MenuMapping = Menu.map((menu, index) => {
@@ -70,7 +71,7 @@ function Navbar() {
               <a
                 key={index}
                 href={menu.Link}
-                className='text-[#a3a3a3] hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer'
+                className={`${menu.route === route ? 'text-white' : 'text-[#a3a3a3]'} hover:text-[#f5f5f5] text-sm font-normal font-bricolage px-2 cursor-pointer`}
               >
                 {menu.navName}
               </a>
