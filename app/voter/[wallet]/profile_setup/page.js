@@ -167,7 +167,7 @@ function Profile_Setup() {
           }
 
           if (notOk) {
-            toast.error('No internet Connection', { icon: '🚫' })
+            toast.error('Incorrect Data Found', { icon: '🚫' })
           }
         })
     } catch (error) {
