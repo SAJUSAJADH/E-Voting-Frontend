@@ -66,9 +66,7 @@ export function Footer() {
           <p className='text-white text-sm font-poppins text-opacity-60'>
             For any inquires to Votechain Team - Contact{' '}
             <span className='text-white text-opacity-100 font-semibold hover:text-opacity-60 tracking-widest ps-2'>
-              <a href='https://evotechain.vercel.app/'>
-                evotechain.vercel.app
-              </a>
+              <a href='https://evotechain.vercel.app/'>evotechain.vercel.app</a>
             </span>
           </p>
         </div>

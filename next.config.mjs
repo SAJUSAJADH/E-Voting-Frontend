@@ -16,6 +16,17 @@ const nextConfig = {
       },
     ],
   },
+  rewrites: async () => {
+    return [
+      {
+        source: '/server/:path*',
+        destination:
+          process.env.NODE_ENV === 'development'
+            ? `${process.env.NEXT_PUBLIC_FLASK_BASEURL}server/:path*`
+            : `${process.env.NEXT_PUBLIC_FLASK_DEPLOYURL}server/:path*`,
+      },
+    ]
+  },
 };
 
 export default nextConfig;

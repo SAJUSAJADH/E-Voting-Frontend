@@ -8,6 +8,8 @@ import { signOut, useSession } from 'next-auth/react'
 import { LoadingOutlined } from '@ant-design/icons'
 import toast from 'react-hot-toast'
 
+
+
 function Profile_Setup() {
   const { wallet } = useParams()
   const router = useRouter()
@@ -15,7 +17,7 @@ function Profile_Setup() {
   const [selectedDistrict, setSelectedDistrict] = useState(null)
   const { data: session, status } = useSession()
   const [zipCode, setZipcode] = useState('')
-  const [FormData, setFormData] = useState({
+  const [formData, setformData] = useState({
     fullname: '',
     voterId: '',
     address: '',
@@ -32,6 +34,7 @@ function Profile_Setup() {
   const addressRef = useRef(null)
   const cityRef = useRef(null)
   const zipCodeRef = useRef(null)
+  
 
   const handleBeforeUnload = (event) => {
     event.preventDefault()
@@ -67,11 +70,11 @@ function Profile_Setup() {
   const handleVoterIdChange = (e) => {
     const inputValue = e.target.value
     if (inputValue === '') {
-      setFormData((prevState) => ({ ...prevState, voterId: inputValue }))
+      setformData((prevState) => ({ ...prevState, voterId: inputValue }))
     } else {
       const regex = /^[a-zA-Z0-9]+$/
       if (regex.test(inputValue)) {
-        setFormData((prevState) => ({
+        setformData((prevState) => ({
           ...prevState,
           voterId: inputValue.toUpperCase(),
         }))
@@ -80,7 +83,7 @@ function Profile_Setup() {
   }
 
   const handleChange = (e, name) => {
-    setFormData((prevState) => ({ ...prevState, [name]: e.target.value }))
+    setformData((prevState) => ({ ...prevState, [name]: e.target.value }))
   }
 
   const handleSubmit = async (e) => {
@@ -88,7 +91,7 @@ function Profile_Setup() {
     setIsLoading(true)
     try {
       const { name: digitalWallet } = session?.user
-      const { fullname, address, voterId, city } = FormData
+      const { fullname, address, voterId, city } = formData
       const { label: district } = selectedDistrict
       const { label: state } = selectedState
       if (
@@ -236,6 +239,8 @@ function Profile_Setup() {
     }
   }
 
+
+
   return (
     <>
       <div className='min-h-screen bg-[#353935] relative overflow-hidden'>
@@ -328,7 +333,7 @@ function Profile_Setup() {
                               ref={voterIdRef}
                               name='voterId'
                               id='voterId'
-                              value={FormData.voterId}
+                              value={formData.voterId}
                               onChange={handleVoterIdChange}
                               className='h-10 border mt-1 rounded px-4 w-full bg-gray-50 outline-none uppercase'
                               placeholder='547893'
@@ -522,13 +527,17 @@ function Profile_Setup() {
                   <p className='text-white mb-6'>Reveal your identity.</p>
 
                   <div className='bg-[#36454F] rounded shadow-lg p-4 px-4 md:p-8 mb-6'>
-                    <div className='grid gap-4 gap-y-2 text-sm grid-cols-1 lg:grid-cols-3'>
+                    <div className='grid gap-4 gap-y-2 text-sm grid-cols-1'>
                       <div className='text-white'>
                         <p className='font-medium text-lg'>Face Recognition</p>
                         <p>Please avoid wearing glasses or hats.</p>
                       </div>
-
-                      <div className='lg:col-span-2 h-[40vh] flex justify-end items-end'>
+                      <div className='grid w-full h-[500px] justify-center items-center'>                       
+                        <div className='grid lg:flex justify-center items-center w-full'>
+                                                 
+                        </div>
+                      </div>
+                      <div className='flex w-full justify-end items-end'>
                         <button
                           disabled={isLoading}
                           onClick={secondPhase}
