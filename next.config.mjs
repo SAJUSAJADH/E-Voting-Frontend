@@ -23,7 +23,7 @@ const nextConfig = {
         destination:
           process.env.NODE_ENV === 'development'
             ? `http://localhost:5328/server/:path*`
-            : `/server/:path*`,
+            : `/server/`,
       },
     ]
   },
