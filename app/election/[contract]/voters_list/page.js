@@ -105,7 +105,7 @@ function Voters_List() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ voterId, name }),
+        body: JSON.stringify({ voterId, name, contract }),
       })
         .then((response) => response.json())
         .then(async (data) => {

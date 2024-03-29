@@ -5,10 +5,10 @@ import { NextResponse } from 'next/server'
 export async function POST(request) {
   try {
     await Connect()
-    const { voterId, name } = await request.json()
+    const { voterId, name, contract } = await request.json()
 
     // Find the document based on the name
-    const electionLog = await ElectionLog.findOne({ address: name })
+    const electionLog = await ElectionLog.findOne({ address: name, contract: contract })
 
     if (!electionLog) {
       return NextResponse.json({
