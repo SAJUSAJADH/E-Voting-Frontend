@@ -119,7 +119,7 @@ function Profile_Setup() {
         toast.error('Network busy', { icon: '🚫' })
         return
       }
-      fetch('/api/voter_registration', {
+      fetch('/server/api/voter_registration', {
         cache: 'no-store',
         method: 'POST',
         headers: {
@@ -199,7 +199,7 @@ function Profile_Setup() {
     setIsLoading(true)
     try {
       const { name } = session?.user
-      fetch('/api/voter_validation', {
+      fetch('/server/api/voter_validation', {
         cache: 'no-store',
         method: 'POST',
         headers: {

@@ -30,7 +30,7 @@ function Dashboard() {
     try {
       if (session) {
         const { name } = session?.user
-        const response = await fetch('/api/get_elections', {
+        const response = await fetch('/server/api/get_elections', {
           cache: 'no-store',
           method: 'POST',
           headers: {
@@ -114,7 +114,7 @@ function Dashboard() {
         const notOk = (response?.message).includes('internal server error')
         const processing = (response?.message).includes('processing')
         if (ok || processing) {
-          fetch('/api/update_electionlog', {
+          fetch('/server/api/update_electionlog', {
             cache: 'no-store',
             method: 'POST',
             headers: {

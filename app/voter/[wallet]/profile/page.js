@@ -25,7 +25,7 @@ function Profile() {
   const getVoterInfo = async () => {
     try {
       const { name } = session?.user
-      fetch('/api/voter_validation', {
+      fetch('/server/api/voter_validation', {
         cache: 'no-store',
         method: 'POST',
         headers: {
@@ -111,7 +111,7 @@ function Profile() {
         toast.error('Network busy', { icon: '🚫' })
         return
       }
-      fetch('/api/update_voter', {
+      fetch('/server/api/update_voter', {
         cache: 'no-store',
         method: 'POST',
         headers: {

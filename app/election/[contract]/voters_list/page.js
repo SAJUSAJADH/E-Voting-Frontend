@@ -4,10 +4,12 @@ import AuthorityNavbar from '@/components/authorityNavbar'
 import { PreLoader } from '@/components/preLoader'
 import { LoadingOutlined } from '@ant-design/icons'
 import { useSession } from 'next-auth/react'
+import { useParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
 function Voters_List() {
+  const { contract } = useParams()
   const [voterId, setVoterId] = useState('')
   const [removeId, setRemoveId] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -20,13 +22,13 @@ function Voters_List() {
     try {
       if (session) {
         const { name } = session?.user
-        fetch('/api/get_voter', {
+        fetch('/server/api/get_voter', {
           cache: 'no-store',
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ name }),
+          body: JSON.stringify({ name, contract }),
         })
           .then((response) => response.json())
           .then(async (data) => {
@@ -97,7 +99,7 @@ function Voters_List() {
         setIsLoading(false)
         return
       }
-      fetch('/api/add_voter', {
+      fetch('/server/api/add_voter', {
         cache: 'no-store',
         method: 'POST',
         headers: {
@@ -158,7 +160,7 @@ function Voters_List() {
         setLoading(false)
         return
       }
-      fetch('/api/remove_voter', {
+      fetch('/server/api/remove_voter', {
         cache: 'no-store',
         method: 'POST',
         headers: {

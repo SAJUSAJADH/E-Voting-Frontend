@@ -30,7 +30,7 @@ function Create_Election() {
   })
 
   const ActiveElection = async (name) => {
-    const response = await fetch('/api/active_elections', {
+    const response = await fetch('/server/api/active_elections', {
       cache: 'no-store',
       method: 'POST',
       headers: {
@@ -106,7 +106,7 @@ function Create_Election() {
                   !transactionResponse[2].includes('Create an election') &&
                   !transactionResponse[2].includes('error')
                 ) {
-                  fetch('/api/election_log', {
+                  fetch('/server/api/election_log', {
                     cache: 'no-store',
                     method: 'POST',
                     headers: {

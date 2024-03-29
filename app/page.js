@@ -167,7 +167,7 @@ export default function Home() {
                   onClick={() => {
                     const { name } = user
                     setIsLoading(true)
-                    fetch('/api/voter_validation', {
+                    fetch('/server/api/voter_validation', {
                       cache: 'no-store',
                       method: 'POST',
                       headers: {

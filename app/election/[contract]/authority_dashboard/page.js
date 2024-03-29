@@ -107,13 +107,13 @@ function Authority_Dashboard() {
     async function voters() {
       try {
         if (session) {
-          fetch('/api/get_voter', {
+          fetch('/server/api/get_voter', {
             cache: 'no-store',
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ name }),
+            body: JSON.stringify({ name, contract }),
           })
             .then((response) => response.json())
             .then(async (data) => {
@@ -135,7 +135,7 @@ function Authority_Dashboard() {
   }, [session])
 
   function checkStatus() {
-    fetch('/api/election_status', {
+    fetch('/server/api/election_status', {
       cache: 'no-store',
       method: 'POST',
       headers: {
@@ -275,7 +275,7 @@ function Authority_Dashboard() {
       if (message === 'success' && status === 200) {
         await Announce_winner(transactionResponse[0]).then((response) => {
           if (!response.message) {
-            fetch('/api/election_status', {
+            fetch('/server/api/election_status', {
               cache: 'no-store',
               method: 'POST',
               headers: {
