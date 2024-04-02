@@ -8,7 +8,7 @@ export async function POST(request) {
     const { name, contract } = await request.json()
     const electionLog = await ElectionLog.findOne({
       address: name,
-      contract: contract
+      contract: contract,
     })
     if (electionLog) {
       return NextResponse.json({

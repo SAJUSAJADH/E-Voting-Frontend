@@ -8,6 +8,7 @@ import { signOut, useSession } from 'next-auth/react'
 import { LoadingOutlined } from '@ant-design/icons'
 import toast from 'react-hot-toast'
 
+
 function Profile_Setup() {
   const { wallet } = useParams()
   const router = useRouter()
@@ -23,9 +24,9 @@ function Profile_Setup() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [componentMount, setComponentMount] = useState({
-    registrationMount: false,
+    registrationMount: true,
     walletLinkMount: false,
-    faceRecognitionMount: true,
+    faceRecognitionMount: false,
   })
   const nameRef = useRef(null)
   const voterIdRef = useRef(null)
@@ -182,9 +183,9 @@ function Profile_Setup() {
     setIsLoading(true)
     try {
       setComponentMount({
-        registrationMount: true,
+        registrationMount: false,
         walletLinkMount: false,
-        faceRecognitionMount: false,
+        faceRecognitionMount: true,
       })
       setIsLoading(false)
     } catch (error) {
@@ -199,39 +200,62 @@ function Profile_Setup() {
     setIsLoading(true)
     try {
       const { name } = session?.user
-      fetch('/server/api/voter_validation', {
+      const { voterId } = FormData
+      fetch('/api/detect_face', {
         cache: 'no-store',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ userId: voterId }),
       })
         .then((response) => response.json())
-        .then((data) => {
-          const ok = (data?.message).includes('Voter found')
-          const notOk = (data?.message).includes('not found')
-          const networkError = (data?.message).includes('Network busy')
-          if (ok) {
-            router.push(`/voter/${name}/dashboard`)
-          }
-          if (notOk) {
+        .then(async (data) => {
+          const { message } = await data
+          console.log(data)
+          const success = message.includes('Face Reg Successfull')
+          if (success) {
+            fetch('/server/api/face_reg', {
+              cache: 'no-store',
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ voterId }),
+            })
+              .then((response) => response.json())
+              .then(async (data) => {
+                console.log(data)
+                const { message } = await data
+                const ok = message.includes('Face ID updated successfully')
+                if (ok) {
+                  toast.success('Face Enrollment Success')
+                  router.push(`/voter/${name}/dashboard`)
+                } else {
+                  setIsLoading(false)
+                  toast.error('Registration failed. Please Try again', {
+                    icon: '🚫',
+                  })
+                }
+              })
+              .catch((e) => {
+                console.error(e)
+                toast.error('Registration failed. Please Try again', { icon: '🚫' })
+                setIsLoading(false)
+              })
+          } else {
             setIsLoading(false)
             toast.error('Registration failed. Please Try again', { icon: '🚫' })
-            setComponentMount({
-              registrationMount: true,
-              walletLinkMount: false,
-              faceRecognitionMount: false,
-            })
           }
-          if (networkError) {
-            setIsLoading(false)
-            toast.error('Network Unavailable', { icon: '🚫' })
-          }
+        })
+        .catch((e) => {
+          console.error(e)
+          toast.error('Registration failed. Please Try again', { icon: '🚫' })
+          setIsLoading(false)
         })
     } catch (error) {
       setIsLoading(false)
-      toast.error('network unavilable', { icon: '🚫' })
+      toast.error('Registration failed. Please Try again', { icon: '🚫' })
       console.log(error)
     }
   }
@@ -264,13 +288,13 @@ function Profile_Setup() {
         <div className='flex justify-center items-center w-full'>
           <div className='flex pt-24 lg:pt-36 justify-between items-center w-2/3'>
             <button
-              className={`bg-[#81fbe9] ${componentMount.faceRecognitionMount == false && 'bg-opacity-50  cursor-not-allowed'} text-black font-bold py-1 px-3 rounded-full`}
+              className={`bg-[#81fbe9] ${componentMount.registrationMount == false && 'bg-opacity-50  cursor-not-allowed'} text-black font-bold py-1 px-3 rounded-full`}
             >
               1
             </button>
             <div className='flex border-t border-b border-[#81fbe9] h-0 w-full'></div>
             <button
-              className={`bg-[#81fbe9] ${componentMount.registrationMount == false && componentMount.faceRecognitionMount == false && 'bg-opacity-60 cursor-not-allowed'} text-black font-bold py-1 px-3 rounded-full`}
+              className={`bg-[#81fbe9] ${componentMount.registrationMount == false && componentMount.walletLinkMount == false && 'bg-opacity-60 cursor-not-allowed'} text-black font-bold py-1 px-3 rounded-full`}
             >
               2
             </button>
@@ -483,14 +507,10 @@ function Profile_Setup() {
                             <div className='inline-flex items-end'>
                               <button
                                 disabled={isLoading}
-                                onClick={completeRegistration}
+                                onClick={secondPhase}
                                 className='bg-[#81fbe9] box-shadow text-black font-bold py-2 px-4 rounded'
                               >
-                                {isLoading ? (
-                                  <LoadingOutlined />
-                                ) : (
-                                  'Registration Completed'
-                                )}
+                                {isLoading ? <LoadingOutlined /> : 'continue'}
                               </button>
                             </div>
                           </div>
@@ -519,22 +539,22 @@ function Profile_Setup() {
                   <h2 className='font-semibold text-xl text-white'>
                     Face Authentication
                   </h2>
-                  <p className='text-white mb-6'>Reveal your identity.</p>
+                  <p className='text-white mb-6'>Enroll your identity.</p>
 
                   <div className='bg-[#36454F] rounded shadow-lg p-4 px-4 md:p-8 mb-6'>
                     <div className='grid gap-4 gap-y-2 text-sm grid-cols-1 lg:grid-cols-3'>
                       <div className='text-white'>
-                        <p className='font-medium text-lg'>Face Recognition</p>
+                        <p className='font-medium text-lg'>Face Enrollment</p>
                         <p>Please avoid wearing glasses or hats.</p>
                       </div>
 
                       <div className='lg:col-span-2 h-[40vh] flex justify-end items-end'>
                         <button
                           disabled={isLoading}
-                          onClick={secondPhase}
+                          onClick={completeRegistration}
                           className='bg-[#81fbe9] box-shadow text-black font-bold py-2 px-4 rounded'
                         >
-                          {isLoading ? <LoadingOutlined /> : 'Continue'}
+                          {isLoading ? <LoadingOutlined /> : 'Enroll Face'}
                         </button>
                       </div>
                     </div>

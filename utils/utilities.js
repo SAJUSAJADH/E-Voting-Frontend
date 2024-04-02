@@ -112,3 +112,4 @@ export const posts = [
     route: 'https://blockonomi.com/implementing-blockchain-voting/',
   },
 ]
+

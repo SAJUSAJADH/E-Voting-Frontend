@@ -8,7 +8,10 @@ export async function POST(request) {
     const { voterId, name, contract } = await request.json()
 
     // Find the document based on the name
-    const electionLog = await ElectionLog.findOne({ address: name, contract: contract })
+    const electionLog = await ElectionLog.findOne({
+      address: name,
+      contract: contract,
+    })
 
     if (!electionLog) {
       return NextResponse.json({
