@@ -114,6 +114,6 @@ class FaceRecognition:
         return result
 
 
-# fr = FaceRecognition()
-# result = fr.run_recognition('318247HITS')
-# print(result)
+fr = FaceRecognition()
+result = fr.run_recognition('318247HITS')
+print(result)
