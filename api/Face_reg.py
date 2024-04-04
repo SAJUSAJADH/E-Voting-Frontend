@@ -1,5 +1,3 @@
-import face_recognition
-import cv2
 import os, sys
 import numpy as np
 import math
@@ -28,6 +26,8 @@ class FaceRecognition:
     
 
     def encode_faces(self):
+        import face_recognition
+
         for image in os.listdir('api/faces'):
             face_image = face_recognition.load_image_file(f'api/faces/{image}')
             face_encoding = face_recognition.face_encodings(face_image)[0]
@@ -37,6 +37,10 @@ class FaceRecognition:
 
 
     def run_recognition(self, user_id):
+
+        import face_recognition
+        import cv2
+
         video_capture = cv2.VideoCapture(0)
 
         face_detected = False
@@ -45,6 +49,8 @@ class FaceRecognition:
             sys.exit('video source not found...')
         
         id = None
+
+        imgBackground = cv2.imread('api/background.png')
 
         while True:
             ret, frame = video_capture.read()
@@ -88,8 +94,8 @@ class FaceRecognition:
                 cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), -1)
                 cv2.putText(frame, name, (left + 6, bottom - 6), cv2.FONT_HERSHEY_DUPLEX, 0.8, (255, 255, 255), 1)
 
-
-            cv2.imshow('face Recognition', frame)
+            imgBackground[162:162 + 480, 55:55 + 640] = frame
+            cv2.imshow('face Recognition', imgBackground)
             cv2.setWindowProperty('face Recognition', cv2.WND_PROP_TOPMOST, 1)
 
             result = ''
