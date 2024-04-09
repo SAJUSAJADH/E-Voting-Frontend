@@ -3,7 +3,7 @@
 
 
 ## Introduction
-Welcome to our latest project, an E-Voting application built on the Ethereum blockchain. This README will guide you through the setup, features, and functionalities of our application.
+Welcome to my latest project, an E-Voting application built on the Ethereum blockchain. This README will guide you through the setup, features, and functionalities of my application.
 
 ## Technologies Used
 - **Solidity**: Used for writing smart contracts that govern the voting process on the Ethereum blockchain.
